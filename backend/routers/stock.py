@@ -9,6 +9,7 @@ import pandas as pd
 import json
 from datetime import datetime, time
 import pytz
+import akshare as ak
 
 router = APIRouter(tags=["股票数据"])
 
@@ -18,7 +19,11 @@ def get_code_type(code):
     """判断是A股、港股、美股还是全球指数"""
     code = code.upper().strip()
 
-    # 全球指数 - 明确列出的代码
+    # 全球指数 - Yahoo格式前缀
+    if code.startswith('^'):
+        return code, "全球指数"
+
+    # 全球指数 - 明确列出的代码 (不带前缀的纯代码)
     global_indices = {
         'N225',    # 日经225
         'KS11',    # 韩国综合指数
@@ -30,9 +35,37 @@ def get_code_type(code):
         'FCHI',    # 法国CAC40
         'E3X',     # 欧洲斯托克50
         'FTSEMIB', # 意大利富时MIB
+        'GDAXI',   # 德国DAX (Yahoo格式)
+        'STOXX50E',# 欧洲斯托克50 (Yahoo格式)
+        'HSI',     # 恒生指数
+        'HSTECH',  # 恒生科技指数
+        'DJI',     # 道琼斯工业指数
+        'IXIC',    # 纳斯达克综合指数
+        'INX',     # 标普500
     }
 
-    # 全球指数前缀
+    # 全球指数代码前缀处理 (来自腾讯API的格式)
+    # hkHSI, hkHSTECH -> 港股指数
+    # usDJI, usIXIC, usINX -> 美股指数
+    # gzN225, gzKS11, gzTWII, gzENSEX, gzFTSTI -> 亚洲指数
+    # ukUKX, ftDAX30, gzFCHI, ftE3X, ftFTSEMIB -> 欧洲指数
+
+    if code.startswith('HK'):  # 港股指数代码 (如 hkHSI, HKHSI)
+        return code, "港股指数"
+    elif code.startswith('US'):  # 美股指数代码 (如 usDJI, USIXIC)
+        return code, "美股指数"
+    elif code.startswith('UK'):  # 英国指数
+        return code, "全球指数"
+    elif code.startswith('GZ'):  # 中国A股指数(前缀)
+        return code, "全球指数"
+    elif code.startswith('FT'):  # 欧洲指数 (ftDAX30, ftE3X, ftFTSEMIB)
+        return code, "全球指数"
+    elif code.startswith('DJI') or code.startswith('IXIC') or code.startswith('INX'):
+        return code, "美股指数"
+    elif code in global_indices:
+        return code, "全球指数"
+
+    # 全球指数前缀（无前缀格式）
     if code.startswith(("GZ", "UK", "FT")):
         return code, "全球指数"
     if code in global_indices:
@@ -47,8 +80,12 @@ def get_code_type(code):
     if len(code) == 5 and code.isdigit():
         return code + ".HK", "港股"
 
-    # A股：SH/SZ前缀+8位或纯6位数字
-    if code.startswith("SH") and len(code) == 8 and code[2:].isdigit():
+    # A股：SH/SZ前缀+8位或纯6位数字 或 .SS/.SZ后缀
+    if code.endswith(".SS"):
+        return code, "A股-上交所"
+    elif code.endswith(".SZ"):
+        return code, "A股-深交所"
+    elif code.startswith("SH") and len(code) == 8 and code[2:].isdigit():
         return code[2:] + ".SS", "A股-上交所"
     elif code.startswith("SZ") and len(code) == 8 and code[2:].isdigit():
         return code[2:] + ".SZ", "A股-深交所"
@@ -58,11 +95,14 @@ def get_code_type(code):
         else:
             return code + ".SZ", "A股-深交所"
 
-    # 美股：US开头或GB_前缀
+    # 美股：US开头或GB_前缀或纯字母代码
     if code.startswith("US") or code.startswith("GB_"):
         return code, "美股"
-    else:
+    # 纯字母代码通常是美股（如 AAPL, TSLA）
+    elif code.isalpha() and len(code) >= 2:
         return code, "美股"
+
+    return code, "未知市场"
 
 def get_tx_code(code):
     """转换成腾讯格式"""
@@ -287,11 +327,14 @@ def merge_realtime_kline(df, code, qt_data=None):
 def get_ifzq_kline(code, period='day', days=500):
     """
     从IFZQ获取K线数据
-    code: 股票代码，如 sh600000, hk00700, usAAPL
+    code: 股票代码，如 sh600000, hk00700, usAAPL, hkHSI, usDJI
     period: day, week, month
     days: 获取天数
     """
     try:
+        code_upper = code.upper()
+        code_lower = code.lower()
+
         # 转换代码格式
         if code.endswith(".SS"):
             ifzq_code = "sh" + code.replace(".SS", "")
@@ -300,10 +343,22 @@ def get_ifzq_kline(code, period='day', days=500):
         elif code.endswith(".HK"):
             ifzq_code = "hk" + code.replace(".HK", "").zfill(5)
         elif code.startswith("US") or code.startswith("GB_"):
-            # 美股转换
-            ifzq_code = code.lower().replace("gb_", "us")
+            # 美股转换 (usDJI, usIXIC, usINX 等美股指数)
+            ifzq_code = code_upper.replace('US', 'us.')  # usDJI -> us.dji
+        elif code_upper.startswith("HK"):
+            # 港股指数 (hkHSI, hkHSTECH)
+            ifzq_code = 'hk' + code_upper[2:]  # hkHSI -> hkHSI (preserves case)
+        elif code_upper.startswith("UK"):
+            # 英国指数
+            ifzq_code = code_lower
+        elif code_upper.startswith("GZ"):
+            # 中国A股指数前缀 (gzN225 等)
+            ifzq_code = code_lower
+        elif code_upper.startswith("FT"):
+            # 欧洲指数前缀 (ftDAX30 等)
+            ifzq_code = code_lower
         else:
-            ifzq_code = code.lower()
+            ifzq_code = code_lower
 
         # 周期映射
         period_map = {'day': 'day', 'week': 'week', 'month': 'month'}
@@ -333,8 +388,16 @@ def get_ifzq_kline(code, period='day', days=500):
                     break
 
             if stock_data:
-                # 获取K线数据 - 优先使用qfqday（前复权），其次day
-                kline_data = stock_data.get("qfqday") or stock_data.get("day") or []
+                # 获取K线数据 - 根据周期获取对应数据
+                # A股有qfqday（前复权日线），但指数只有day/week/month
+                if period == 'day':
+                    kline_data = stock_data.get("qfqday") or stock_data.get("day") or []
+                elif period == 'week':
+                    kline_data = stock_data.get("week") or stock_data.get("day") or []
+                elif period == 'month':
+                    kline_data = stock_data.get("month") or stock_data.get("day") or []
+                else:
+                    kline_data = stock_data.get("qfqday") or stock_data.get("day") or []
                 qt_data = stock_data.get("qt", {})
 
                 for item in kline_data:
@@ -363,6 +426,222 @@ def get_ifzq_kline(code, period='day', days=500):
     except Exception as e:
         print(f"IFZQ K-line error: {e}")
         return None, None
+
+
+def get_akshare_kline(code, period='daily', days=500):
+    """
+    使用AKShare获取K线数据
+    支持：A股、港股、美股、全球指数
+    code: 股票代码，如 000001, 00700.HK, AAPL, ^N225, hkHSI, usDJI, gzN225
+    period: daily, weekly, monthly
+    days: 获取天数
+    返回: (DataFrame, None) 或 (None, None)
+    """
+    try:
+        # 确定市场类型和代码格式
+        code_upper = code.upper()
+
+        # 周期映射
+        period_map = {'daily': 'daily', 'weekly': 'weekly', 'monthly': 'monthly'}
+        akshare_period = period_map.get(period, 'daily')
+
+        # A股指数代码 (需要使用 index_zh_a_hist 而不是 stock_zh_a_hist)
+        # 这些代码在东方财富既是股票代码也是指数代码，需要单独处理
+        zh_index_codes = {
+            '000001',  # 上证指数
+            '399001',  # 深证成指
+            '399006',  # 创业板指
+            '000300',  # 沪深300
+            '000016',  # 上证50
+            '000688',  # 科创50
+            '000010',  # 上证180
+            '399300',  # 深证100
+            '000905',  # 中证500
+            '000906',  # 中证800
+            '000852',  # 中证1000
+        }
+
+        # A股 (6位数字或带.SS/.SZ后缀)
+        if code_upper.endswith('.SS') or code_upper.endswith('.SZ'):
+            symbol = code_upper.replace('.SS', '').replace('.SZ', '')
+
+            # 判断是指数还是股票
+            if symbol in zh_index_codes:
+                # A股指数使用 index_zh_a_hist
+                df = ak.index_zh_a_hist(symbol=symbol, period=akshare_period, start_date='19000101', end_date='20500101')
+                df = df.rename(columns={
+                    '日期': 'date', '开盘': 'open', '收盘': 'close',
+                    '最高': 'high', '最低': 'low', '成交量': 'volume'
+                })
+                df['date'] = pd.to_datetime(df['date'])
+                df = df.set_index('date').sort_index()
+            else:
+                # A股股票使用 stock_zh_a_hist
+                adjust = 'qfq'
+                df = ak.stock_zh_a_hist(symbol=symbol, period=akshare_period, start_date='19000101', end_date='20500101', adjust=adjust)
+                df = df.rename(columns={
+                    '日期': 'date', '开盘': 'open', '收盘': 'close',
+                    '最高': 'high', '最低': 'low', '成交量': 'volume'
+                })
+                df['date'] = pd.to_datetime(df['date'])
+                df = df.set_index('date').sort_index()
+
+            # 取最后days条
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        # 港股 (5位数字或带.HK后缀 或 hk前缀的指数如 hkHSI)
+        elif code_upper.endswith('.HK') or (len(code) == 5 and code.isdigit()):
+            symbol = code.replace('.HK', '').zfill(5)
+
+            df = ak.stock_hk_hist(symbol=symbol, period=akshare_period, start_date='19000101', end_date='20500101')
+            df = df.rename(columns={
+                '日期': 'date', '开盘': 'open', '收盘': 'close',
+                '最高': 'high', '最低': 'low', '成交量': 'volume'
+            })
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.set_index('date').sort_index()
+
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        # 港股指数 (hkHSI, hkHSTECH) - 使用腾讯接口
+        elif code_upper.startswith('HK'):
+            # 腾讯格式: hkHSI -> 恒生指数, hkHSTECH -> 恒生科技
+            # 注意：必须保持原大小写，如 'hkHSI'
+            return get_ifzq_kline('hk' + code_upper[2:], period=akshare_period, days=days)
+
+        # 美股指数 (usDJI, usIXIC, usINX) - 使用腾讯接口
+        elif code_upper.startswith('US') and len(code) <= 10:
+            # 腾讯格式: us.DJI, us.IXIC, us.INX (注意有点号，指数名称大写)
+            ifzq_code = 'us.' + code_upper[2:]  # usDJI -> us.DJI
+            return get_ifzq_kline(ifzq_code, period=akshare_period, days=days)
+
+        # 美股 (US开头或纯字母代码如 AAPL, TSLA)
+        elif code_upper.startswith('US') or (len(code) >= 2 and code.isalpha() and not code_upper.startswith('HSI')):
+            symbol = code_upper.replace('US', '')
+
+            df = ak.stock_us_hist(symbol=symbol, period=akshare_period, start_date='19000101', end_date='20500101')
+            df = df.rename(columns={
+                '日期': 'date', '开盘': 'open', '收盘': 'close',
+                '最高': 'high', '最低': 'low', '成交量': 'volume'
+            })
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.set_index('date').sort_index()
+
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        # 全球指数 (如 ^N225, ^HSI, ^DAX 等 Yahoo格式 或 gzN225, ftDAX30 等腾讯格式)
+        elif code.startswith('^') or code in ['N225', 'KS11', 'TWII', 'ENSEX', 'FTSTI', 'DAX30', 'FCHI', 'E3X', 'FTSEMIB', 'HSI', 'HSTECH', 'DJI', 'IXIC', 'INX']:
+            # 转换代码格式为Yahoo Finance格式
+            yahoo_symbol = code
+            if code.upper() == 'N225' or code == 'gzN225':
+                yahoo_symbol = '^N225'      # 日经225
+            elif code.upper() == 'KS11' or code == 'gzKS11':
+                yahoo_symbol = '^KS11'      # 韩国综合指数
+            elif code.upper() == 'TWII' or code == 'gzTWII':
+                yahoo_symbol = '^TWII'      # 台湾加权指数
+            elif code.upper() == 'ENSEX' or code == 'gzENSEX':
+                yahoo_symbol = '^ENSEX'     # 印度孟买敏感指数
+            elif code.upper() == 'FTSTI' or code == 'gzFTSTI':
+                yahoo_symbol = '^FTSTI'     # 新加坡海峡时报指数
+            elif code.upper() in ['DAX30', 'DAX'] or code in ['ftDAX30', 'gzDAX30']:
+                yahoo_symbol = '^GDAXI'     # 德国DAX
+            elif code.upper() == 'FCHI' or code in ['gzFCHI', 'ftFCHI']:
+                yahoo_symbol = '^FCHI'      # 法国CAC40
+            elif code.upper() in ['E3X', 'E3X.EU'] or code in ['ftE3X', 'gzE3X']:
+                yahoo_symbol = '^STOXX50E'  # 欧洲斯托克50
+            elif code.upper() == 'FTSEMIB' or code in ['ftFTSEMIB', 'gzFTSEMIB']:
+                yahoo_symbol = '^FTSEMIB'   # 意大利富时MIB
+            elif code.upper() == 'HSI' or code == 'hkHSI':
+                yahoo_symbol = '^HSI'       # 恒生指数
+            elif code.upper() == 'HSTECH' or code == 'hkHSTECH':
+                yahoo_symbol = '^HSTECH'    # 恒生科技指数
+            elif code.upper() == 'DJI' or code == 'usDJI':
+                yahoo_symbol = '^DJI'       # 道琼斯工业指数
+            elif code.upper() == 'IXIC' or code == 'usIXIC':
+                yahoo_symbol = '^IXIC'      # 纳斯达克综合指数
+            elif code.upper() == 'INX' or code == 'usINX':
+                yahoo_symbol = '^INX'       # 标普500
+
+            # 使用stock_us_hist获取全球指数K线
+            df = ak.stock_us_hist(symbol=yahoo_symbol, period=akshare_period, start_date='19000101', end_date='20500101', adjust='')
+            df = df.rename(columns={
+                '日期': 'date', '开盘': 'open', '收盘': 'close',
+                '最高': 'high', '最低': 'low', '成交量': 'volume'
+            })
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.set_index('date').sort_index()
+
+            # 过滤未来日期
+            df = df[df.index <= pd.Timestamp.today()]
+
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        # 欧洲指数前缀处理 (ftDAX30, ftE3X, ftFTSEMIB, ukUKX)
+        elif code.startswith('FT') or code.startswith('UK'):
+            # 转换格式
+            if code.upper() == 'FTDAX30':
+                yahoo_symbol = '^GDAXI'
+            elif code.upper() == 'FTE3X':
+                yahoo_symbol = '^STOXX50E'
+            elif code.upper() == 'FTFTSEMIB':
+                yahoo_symbol = '^FTSEMIB'
+            elif code.upper() == 'UKUKX':
+                yahoo_symbol = '^UKX'
+            else:
+                yahoo_symbol = code
+
+            df = ak.stock_us_hist(symbol=yahoo_symbol, period=akshare_period, start_date='19000101', end_date='20500101', adjust='')
+            df = df.rename(columns={
+                '日期': 'date', '开盘': 'open', '收盘': 'close',
+                '最高': 'high', '最低': 'low', '成交量': 'volume'
+            })
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.set_index('date').sort_index()
+            df = df[df.index <= pd.Timestamp.today()]
+
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        # 纯6位数字 -> 默认为A股
+        elif len(code) == 6 and code.isdigit():
+            symbol = code
+            adjust = 'qfq'
+
+            df = ak.stock_zh_a_hist(symbol=symbol, period=akshare_period, start_date='19000101', end_date='20500101', adjust=adjust)
+            df = df.rename(columns={
+                '日期': 'date', '开盘': 'open', '收盘': 'close',
+                '最高': 'high', '最低': 'low', '成交量': 'volume'
+            })
+            df['date'] = pd.to_datetime(df['date'])
+            df = df.set_index('date').sort_index()
+
+            if len(df) > days:
+                df = df.tail(days)
+
+            return df, None
+
+        else:
+            print(f"AKShare: Unknown code type: {code}")
+            return None, None
+
+    except Exception as e:
+        print(f"AKShare K-line error for {code}: {e}")
+        return None, None
+
 
 def get_eastmoney_kline(code, period='101'):
     """从东财获取K线（备用）"""
@@ -494,22 +773,47 @@ def get_indicators(df):
 
 # --- FastAPI 接口 ---
 
+async def fetch_with_retry(fetch_func, *args, max_retries=2, delay=0.5, **kwargs):
+    """
+    带重试的数据获取函数
+    fetch_func: 同步的获取函数
+    """
+    import asyncio
+    for attempt in range(max_retries):
+        try:
+            result = await asyncio.to_thread(fetch_func, *args, **kwargs)
+            if result[0] is not None:
+                return result
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+        if attempt < max_retries - 1:
+            await asyncio.sleep(delay)
+    return None, None
+
 @router.get("/stock/kline")
-async def get_kline(symbol: str, days: int = 60, period: str = "daily"):
-    """获取K线数据接口"""
+async def get_kline(symbol: str, days: int = 180, period: str = "daily"):
+    """获取K线数据接口 - 使用AKShare作为主数据源，带重试机制
+
+    Args:
+        symbol: 股票代码
+        days: 获取天数，默认180天以确保有足够历史数据
+        period: 日K(daily)/周K(weekly)/月K(monthly)
+    """
     code, market = get_code_type(symbol)
 
-    # 周期映射: daily->day, weekly->week, monthly->month
-    p_map = {'daily': 'day', 'weekly': 'week', 'monthly': 'month'}
-    p = p_map.get(period, 'day')
+    # 使用AKShare获取K线（支持A股、港股、美股、全球指数），带重试
+    df, qt_data = await fetch_with_retry(get_akshare_kline, code, period=period, days=days)
 
-    # 使用IFZQ获取K线
-    df, qt_data = get_ifzq_kline(code, period=p, days=days)
+    # 如果AKShare失败或数据为空，备用IFZQ（带重试）
+    if df is None or len(df) == 0:
+        p_map = {'daily': 'day', 'weekly': 'week', 'monthly': 'month'}
+        p = p_map.get(period, 'day')
+        df, qt_data = await fetch_with_retry(get_ifzq_kline, code, period=p, days=days)
 
-    if df is None:
+    if df is None or len(df) == 0:
         raise HTTPException(404, f"无法获取 {symbol} 的K线数据")
 
-    # 合并实时数据（仅日线）
+    # 合并实时数据（仅日线）- 如果有实时数据
     if period == 'daily' and qt_data:
         df = merge_realtime_kline(df, code, qt_data)
 

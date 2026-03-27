@@ -530,6 +530,7 @@
     let currentKlineName = null;
     let currentKlinePeriod = 'daily';
     let klineHideTimer = null;
+    let currentKlines = [];  // 保存当前K线数据，供tooltip使用
 
     // 分页状态
     const pagination = {
@@ -782,12 +783,23 @@
       if (code.startsWith('us')) {
         return code.toLowerCase();
       }
-      // 欧洲指数: ukUKX -> ukUKX, ftDAX30 -> ftDAX30, gzFCHI -> gzfchi
+      // 欧洲指数和亚洲指数暂不支持K线，返回null
+      // 欧洲: ukUKX, ftDAX30, gzFCHI, ftE3X, ftFTSEMIB
+      // 亚洲: gzN225, gzKS11, gzTWII, gzENSEX, gzFTSTI
       if (code.startsWith('uk') || code.startsWith('ft') || code.startsWith('gz')) {
-        return code.toLowerCase();
+        return null;
       }
       // 直接返回
       return code;
+    }
+
+    // 判断指数是否支持K线显示
+    function supportsKline(code) {
+      // 欧洲指数和亚洲指数不支持K线
+      if (code.startsWith('uk') || code.startsWith('ft') || code.startsWith('gz')) {
+        return false;
+      }
+      return true;
     }
 
     // 显示K线图
@@ -893,8 +905,8 @@
       container.classList.add('active');
     }
 
-    // 获取K线数据并渲染
-    async function fetchKlineAndRender(code, name, period = 'daily') {
+    // 获取K线数据并渲染（带重试机制）
+    async function fetchKlineAndRender(code, name, period = 'daily', retryCount = 0) {
       const container = document.getElementById('kline-container');
       const title = document.getElementById('kline-title');
       const wrapper = document.getElementById('kline-chart');
@@ -910,8 +922,10 @@
 
       try {
         // period: daily=日K, weekly=周K, monthly=月K
-        const days = period === 'daily' ? 60 : (period === 'weekly' ? 52 : 24);
+        // 增加获取的天数，确保有足够的历史数据
+        const days = period === 'daily' ? 180 : (period === 'weekly' ? 260 : 120);
         const response = await fetch(`${API_BASE}/stock/kline?symbol=${encodeURIComponent(code)}&days=${days}&period=${period}`);
+
         if (!response.ok) throw new Error('API error');
 
         const data = await response.json();
@@ -930,7 +944,16 @@
         renderKlineChart(klines, name);
       } catch (e) {
         console.log('Kline fetch error:', e);
-        wrapper.innerHTML = '<div class="kline-loading">K线数据加载失败</div>';
+
+        // 重试机制：最多重试3次
+        if (retryCount < 3) {
+          wrapper.innerHTML = '<div class="kline-loading">数据加载失败，正在重试...</div>';
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
+          fetchKlineAndRender(code, name, period, retryCount + 1);
+          return;
+        }
+
+        wrapper.innerHTML = '<div class="kline-loading">K线数据加载失败，请稍后重试</div>';
       }
     }
 
@@ -948,6 +971,9 @@
         wrapper.innerHTML = '<div class="kline-loading">暂无数据</div>';
         return;
       }
+
+      // 保存K线数据到全局变量，供tooltip使用
+      currentKlines = klines;
 
       // 准备数据
       // kline格式: { date, open, high, low, close, volume }
@@ -1026,40 +1052,50 @@
             color: '#456'
           },
           formatter: function(params) {
-            // 找到各系列数据
-            const candi = params.find(p => p.seriesIndex === 0);
-            const ma5Item = params.find(p => p.seriesIndex === 1);
-            const ma10Item = params.find(p => p.seriesIndex === 2);
-            const ma20Item = params.find(p => p.seriesIndex === 3);
-            const ma30Item = params.find(p => p.seriesIndex === 4);
-            const volumItem = params.find(p => p.seriesIndex === 5);
+            // 从params获取dataIndex（数据点的索引）
+            const candi = params.find(p => p.seriesName === '日K');
+            if (!candi || candi.dataIndex === undefined) return '';
 
-            if (!candi || !candi.data) return '';
+            const dataIndex = candi.dataIndex;
+            const kline = currentKlines[dataIndex];
+            if (!kline) return '数据不存在';
 
-            const currentData = candi.data;
-            const date = candi.axisValue || '';
-            // ECharts candlestick数据格式: [open, close, low, high] - 使用正确的索引
-            const open = currentData[0] || 0;
-            const close = currentData[1] || 0;
-            const low = currentData[2] || 0;
-            const high = currentData[3] || 0;
-            const volum = volumItem ? (volumItem.data ? volumItem.data[1] : 0) : 0;
+            // 直接从原始K线数据获取（最可靠）
+            const open = parseFloat(kline.open) || 0;
+            const close = parseFloat(kline.close) || 0;
+            const low = parseFloat(kline.low) || 0;
+            const high = parseFloat(kline.high) || 0;
+            const volume = parseInt(kline.volume) || 0;
 
-            const ma5Val = ma5Item && ma5Item.data ? ma5Item.data : '-';
-            const ma10Val = ma10Item && ma10Item.data ? ma10Item.data : '-';
-            const ma20Val = ma20Item && ma20Item.data ? ma20Item.data : '-';
-            const ma30Val = ma30Item && ma30Item.data ? ma30Item.data : '-';
+            // 从params获取MA数据
+            const ma5Item = params.find(p => p.seriesName === 'MA5');
+            const ma10Item = params.find(p => p.seriesName === 'MA10');
+            const ma20Item = params.find(p => p.seriesName === 'MA20');
+            const ma30Item = params.find(p => p.seriesName === 'MA30');
+
+            const getMaValue = (item) => {
+              if (!item) return '-';
+              const v = item.value !== undefined ? item.value : (item.data !== undefined ? item.data : '-');
+              return v;
+            };
+
+            const ma5Val = getMaValue(ma5Item);
+            const ma10Val = getMaValue(ma10Item);
+            const ma20Val = getMaValue(ma20Item);
+            const ma30Val = getMaValue(ma30Item);
+
+            const date = kline.date;
 
             return date + '<br>' +
                 '开盘:' + open.toFixed(2) + '<br>' +
                 '收盘:' + close.toFixed(2) + '<br>' +
                 '最低:' + low.toFixed(2) + '<br>' +
                 '最高:' + high.toFixed(2) + '<br>' +
-                '成交量(万手):' + (volum ? volum.toFixed(2) : '0') + '<br>' +
-                'MA5日均线:' + (typeof ma5Val === 'number' ? ma5Val.toFixed(2) : ma5Val) + '<br>' +
-                'MA10日均线:' + (typeof ma10Val === 'number' ? ma10Val.toFixed(2) : ma10Val) + '<br>' +
-                'MA20日均线:' + (typeof ma20Val === 'number' ? ma20Val.toFixed(2) : ma20Val) + '<br>' +
-                'MA30日均线:' + (typeof ma30Val === 'number' ? ma30Val.toFixed(2) : ma30Val);
+                '成交量(万手):' + (volume / 10000).toFixed(2) + '<br>' +
+                'MA5:' + (typeof ma5Val === 'number' ? ma5Val.toFixed(2) : ma5Val) + '<br>' +
+                'MA10:' + (typeof ma10Val === 'number' ? ma10Val.toFixed(2) : ma10Val) + '<br>' +
+                'MA20:' + (typeof ma20Val === 'number' ? ma20Val.toFixed(2) : ma20Val) + '<br>' +
+                'MA30:' + (typeof ma30Val === 'number' ? ma30Val.toFixed(2) : ma30Val);
           }
         },
         axisPointer: {
@@ -1123,8 +1159,8 @@
           }
         ],
         dataZoom: [
-          { type: 'inside', xAxisIndex: [0, 1], start: 85, end: 100 },
-          { show: true, xAxisIndex: [0, 1], type: 'slider', top: '85%', start: 85, end: 100 }
+          { type: 'inside', xAxisIndex: [0, 1], start: 0, end: 100 },
+          { show: true, xAxisIndex: [0, 1], type: 'slider', top: '85%', start: 0, end: 100 }
         ],
         series: [
           {
@@ -1296,7 +1332,7 @@
         const priceDisplay = index.price || '--';
 
         return `
-          <div class="index-card" data-code="${index.code}" data-name="${index.name}" onmouseenter="showKline('${index.code}', '${index.name}')" onmouseleave="hideKline()">
+          <div class="index-card" data-code="${index.code}" data-name="${index.name}" ${supportsKline(index.code) ? 'onmouseenter="showKline(\'' + index.code + '\', \'' + index.name + '\')" onmouseleave="hideKline()"' : ''}>
             <div class="index-name">${index.name}</div>
             <div class="index-value">${priceDisplay}</div>
             <div class="index-change ${isUp ? 'up' : 'down'}">

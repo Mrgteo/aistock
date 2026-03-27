@@ -1,0 +1,416 @@
+INFO:     Started server process [143655]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8017 (Press CTRL+C to quit)
+INFO:     127.0.0.1:45006 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46316 - "GET /api/stock/kline?symbol=hkHSI&days=3&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46320 - "GET /api/stock/kline?symbol=hkHSI&days=3&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46328 - "GET /api/stock/kline?symbol=usDJI&days=3&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46330 - "GET /api/stock/kline?symbol=usIXIC&days=3&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46332 - "GET /api/stock/kline?symbol=usINX&days=3&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54787 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59122 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62612 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43532 - "GET /api/stock/kline?symbol=hkHSI&days=5&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43536 - "GET /api/stock/kline?symbol=usDJI&days=5&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58444 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49666 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53423 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58753 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49666 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54919 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50145 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63549 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55453 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63092 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63316 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53765 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55205 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58298 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58245 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59615 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55550 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61343 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50998 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56820 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58493 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63094 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/screener/hot_strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/review/2026-03-27 HTTP/1.1" 200 OK
+[MongoDB] 已连接到 stock_trade_reports
+[MongoDB] 索引已创建
+INFO:     127.0.0.1:53474 - "GET /api/report/history/all?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/report/knowledge/list?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+Failed to fetch global indices: HTTPSConnectionPool(host='proxy.finance.qq.com', port=443): Max retries exceeded with url: /ifzqgtimg/appstock/app/rank/indexRankDetail2 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+INFO:     127.0.0.1:53474 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:62268 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52958 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65356 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65356 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65356 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51769 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64166 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=399001.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54012 - "GET /api/stock/kline?symbol=399001.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=399001.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=399001.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=000001.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59055 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52964 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52964 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64804 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64804 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58350 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52964 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56306 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=000300.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59055 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=260&period=weekly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=000300.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56306 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=260&period=weekly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=000300.SS&days=120&period=monthly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59055 - "GET /api/stock/kline?symbol=000300.SS&days=260&period=weekly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:56306 - "GET /api/stock/kline?symbol=000300.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=000016.SS&days=260&period=weekly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:56306 - "GET /api/stock/kline?symbol=000300.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57999 - "GET /api/stock/kline?symbol=399006.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51906 - "GET /api/stock/kline?symbol=399001.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57522 - "GET /api/stock/kline?symbol=000001.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/stock/kline?symbol=000001.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50410 - "GET /api/stock/kline?symbol=000001.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50410 - "GET /api/stock/kline?symbol=000001.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50410 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50410 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50900 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64924 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64924 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64924 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64924 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52807 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50060 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65017 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65017 - "GET /api/stock/kline?symbol=000016.SS&days=120&period=monthly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:65017 - "GET /api/stock/kline?symbol=000300.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63059 - "GET /api/stock/kline?symbol=000016.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=000016.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58741 - "GET /api/stock/kline?symbol=399006.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59650 - "GET /api/stock/kline?symbol=000300.SS&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59650 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51779 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51779 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=399001.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64443 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+AKShare K-line error for UKUKX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=ukukx&days=120&period=monthly HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64443 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+AKShare K-line error for UKUKX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=ukukx&days=120&period=monthly HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49666 - "GET /api/stock/kline?symbol=usdji&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=usdji&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49666 - "GET /api/stock/kline?symbol=usixic&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=usdji&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=usdji&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=usdji&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62651 - "GET /api/stock/kline?symbol=usinx&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62785 - "GET /api/stock/kline?symbol=usixic&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62785 - "GET /api/stock/kline?symbol=usinx&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62785 - "GET /api/stock/kline?symbol=usixic&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for FTDAX30: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:62785 - "GET /api/stock/kline?symbol=ftdax30&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZAEX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:55383 - "GET /api/stock/kline?symbol=gzaex&days=180&period=daily HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62785 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+AKShare K-line error for UKUKX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=ukukx&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for FTDAX30: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:55383 - "GET /api/stock/kline?symbol=ftdax30&days=180&period=daily HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52730 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+AKShare K-line error for UKUKX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=ukukx&days=180&period=daily HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54111 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+AKShare: Unknown code type: GZN225
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=gzn225&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for UKUKX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:54111 - "GET /api/stock/kline?symbol=ukukx&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare: Unknown code type: GZN225
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=gzn225&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare: Unknown code type: GZKS11
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=gzks11&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare: Unknown code type: GZN225
+INFO:     127.0.0.1:54111 - "GET /api/stock/kline?symbol=gzn225&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare: Unknown code type: GZKS11
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=gzks11&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZTWII: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=gztwii&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZENSEX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:54111 - "GET /api/stock/kline?symbol=gzensex&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZFTSTI: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=gzftsti&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for FTFBMKLCI: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:54111 - "GET /api/stock/kline?symbol=ftfbmklci&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZFTSTI: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=gzftsti&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZENSEX: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=gzensex&days=180&period=daily HTTP/1.1" 404 Not Found
+AKShare K-line error for GZTWII: 'NoneType' object is not subscriptable
+INFO:     127.0.0.1:58683 - "GET /api/stock/kline?symbol=gztwii&days=180&period=daily HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54111 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54111 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58683 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52734 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58683 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52730 - "GET /api/stock/kline?symbol=000016.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58568 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:59191 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51311 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54124 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54124 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+Failed to fetch CLS telegraph: HTTPSConnectionPool(host='www.cls.cn', port=443): Max retries exceeded with url: /nodeapi/telegraphList (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+INFO:     127.0.0.1:60712 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+Failed to fetch THS news: HTTPSConnectionPool(host='news.10jqka.com.cn', port=443): Max retries exceeded with url: /tapp/news/push/stock/?page=1&tag=&track=website&pagesize=20 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+INFO:     127.0.0.1:62823 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+Failed to fetch global indices: HTTPSConnectionPool(host='proxy.finance.qq.com', port=443): Max retries exceeded with url: /ifzqgtimg/appstock/app/rank/indexRankDetail2 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+INFO:     127.0.0.1:55872 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63449 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61431 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56296 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50080 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58588 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54391 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49666 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62575 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49899 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63994 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53539 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53505 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64689 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49684 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51665 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61121 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63641 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56790 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53745 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52180 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52614 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56779 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65070 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62402 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49331 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56272 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59267 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60245 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63861 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53106 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64061 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62627 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+Failed to fetch CLS telegraph: HTTPSConnectionPool(host='www.cls.cn', port=443): Max retries exceeded with url: /nodeapi/telegraphList (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))
+INFO:     127.0.0.1:59891 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63935 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54975 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55378 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61831 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58341 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51933 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54467 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50808 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63381 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58113 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53292 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62425 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62425 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/screener/hot_strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/review/2026-03-27 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/report/history/all?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/report/knowledge/list?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49300 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=000016.SS&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&secid=0.000300&beg=19000101&end=20500101 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 399001.SZ: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&secid=0.399001&beg=19000101&end=20500101 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61522 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56189 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54353 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60328 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54353 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/screener/hot_strategies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/review/2026-03-27 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/report/history/all?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54264 - "GET /api/report/knowledge/list?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54264 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49965 - "GET /api/stock/kline?symbol=000001.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58593 - "GET /api/stock/kline?symbol=000016.SS&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 399006.SZ: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&secid=0.399006&beg=19000101&end=20500101 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+INFO:     127.0.0.1:58593 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 000300.SS: 'date'
+INFO:     127.0.0.1:61838 - "GET /api/stock/kline?symbol=000300.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61838 - "GET /api/stock/kline?symbol=399006.SZ&days=180&period=daily HTTP/1.1" 200 OK
+AKShare K-line error for 399001.SZ: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=101&fqt=1&secid=0.399001&beg=19000101&end=20500101 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+INFO:     127.0.0.1:61838 - "GET /api/stock/kline?symbol=399001.SZ&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61838 - "GET /api/stock/kline?symbol=000016.SS&days=180&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=000016.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61838 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=000016.SS&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51720 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51720 - "GET /api/stock/kline?symbol=399001.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=399006.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+AKShare K-line error for 399001.SZ: HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61%2Cf116&ut=7eea3edcaed734bea9cbfc24409ed989&klt=102&fqt=1&secid=0.399001&beg=19000101&end=20500101 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+INFO:     127.0.0.1:51720 - "GET /api/stock/kline?symbol=399001.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=399006.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51720 - "GET /api/stock/kline?symbol=399006.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51720 - "GET /api/stock/kline?symbol=399006.SZ&days=120&period=monthly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=399006.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59056 - "GET /api/stock/kline?symbol=399006.SZ&days=260&period=weekly HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62952 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63344 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59424 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59759 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50073 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50073 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59425 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51671 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59425 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54795 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55233 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55233 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50258 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61006 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61006 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57075 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51223 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52897 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51618 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60773 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62991 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59863 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54877 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58848 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58613 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57201 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54886 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55858 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63266 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52313 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49728 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59108 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50566 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58816 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57968 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53781 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55154 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49667 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59374 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55061 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58353 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43318 - "GET /api/stock/kline?symbol=000001.SS&days=5&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46736 - "GET /api/stock/kline?symbol=sh000001&days=5&period=daily HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53380 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51650 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55755 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52562 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58365 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53544 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53544 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63231 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55708 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55708 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54669 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58279 - "GET /api/market/telegraph?source=cls&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57450 - "GET /api/market/telegraph?source=ths&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63753 - "GET /api/market/global_indices HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [143655]
