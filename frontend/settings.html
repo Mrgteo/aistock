@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>设置</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    html.dark {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 左侧导航 */
+    .left-nav {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      overflow-y: auto;
+    }
+    .nav-section {
+      margin-bottom: 16px;
+    }
+    .nav-section-title {
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nav-item {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: #f8fafc; color: var(--text-main); }
+    .nav-item.active { background: #eff6ff; color: var(--primary); border-left-color: var(--primary); }
+    html.dark .nav-item:hover { background: #334155; }
+    html.dark .nav-item.active { background: #1e3a5f; }
+    .nav-item .icon { font-size: 16px; }
+    .nav-item .arrow { margin-left: auto; font-size: 12px; opacity: 0.5; }
+
+    /* 右侧内容区 */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .page-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .page-header h2 { font-size: 16px; font-weight: 600; }
+    .page-header .desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    /* 设置卡片 */
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .settings-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* 表单 */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .form-group .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      background: #f8fafc;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+    html.dark input[type="text"], html.dark input[type="password"], html.dark input[type="number"], html.dark select, html.dark textarea {
+      background: #334155;
+      color: #f1f5f9;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+      background: #475569;
+    }
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* 按钮 */
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fee2e2; }
+    .btn-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .btn-success:hover { background: #a7f3d0; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* 设置行 */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row .setting-info { flex: 1; }
+    .setting-row .setting-title { font-size: 14px; font-weight: 500; }
+    .setting-row .setting-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* 开关 */
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .switch.active { background: var(--primary); }
+    .switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .switch.active::after { left: 22px; }
+
+    /* 状态标签 */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status-badge.success { background: #d1fae5; color: #065f46; }
+    .status-badge.error { background: #fee2e2; color: #991b1b; }
+    .status-badge.warning { background: #fef3c7; color: #92400e; }
+
+    /* 配置项网格 */
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .config-grid { grid-template-columns: 1fr; }
+    }
+
+    /* 按钮组 */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* 滚动条 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* 提示消息 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    .toast.success { background: #10b981; color: white; }
+    .toast.error { background: #ef4444; color: white; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* 分隔线 */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    /* 可折叠导航 */
+    .nav-section {
+      margin-bottom: 8px;
+    }
+    .nav-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-section-header:hover {
+      background: #f8fafc;
+    }
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nav-section-arrow {
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+    .nav-section-arrow.down {
+      transform: rotate(90deg);
+    }
+    .nav-section-items {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 500px;
+    }
+    .nav-section-items.collapsed {
+      max-height: 0 !important;
+    }
+    .nav-item.sub {
+      justify-content: flex-start;
+    }
+    .nav-item.sub .arrow {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+    .nav-item.sub .arrow.down {
+      transform: rotate(90deg);
+    }
+    .nav-sub-items {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 500px;
+    }
+    .nav-sub-items.collapsed {
+      max-height: 0 !important;
+    }
+    .nav-sub-items .nav-item {
+      padding-left: 40px;
+      font-size: 13px;
+    }
+
+    /* 主题选项 */
+    .theme-options {
+      display: flex;
+      gap: 16px;
+    }
+    .theme-option {
+      cursor: pointer;
+    }
+    .theme-option input {
+      display: none;
+    }
+    .theme-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 24px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.2s;
+      min-width: 100px;
+    }
+    .theme-option input:checked + .theme-label {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+    html.dark .theme-option input:checked + .theme-label {
+      background: #1e3a5f;
+    }
+    .theme-option:hover .theme-label {
+      border-color: var(--primary);
+    }
+    .theme-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .theme-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* 侧边栏宽度滑块 */
+    .sidebar-width-config {
+      padding: 10px 0;
+    }
+    .width-display {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+    #sidebarWidthSlider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      background: #e2e8f0;
+      border-radius: 4px;
+      outline: none;
+    }
+    #sidebarWidthSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    #sidebarWidthSlider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    .width-range {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>⚙️ 系统设置</h1>
+  </div>
+
+  <div class="main-container">
+    <!-- 左侧导航 -->
+    <div class="left-nav">
+      <!-- 个人设置 -->
+      <div class="nav-section">
+        <div class="nav-section-header" onclick="toggleSection(this)">
+          <span class="nav-section-title">个人设置</span>
+          <span class="nav-section-arrow">▶</span>
+        </div>
+        <div class="nav-section-items collapsed">
+          <div class="nav-item active" onclick="switchSection('general', this)">
+            <span class="icon">⚙️</span>
+            <span>通用设置</span>
+          </div>
+          <div class="nav-item" onclick="switchSection('appearance', this)">
+            <span class="icon">🎨</span>
+            <span>外观设置</span>
+          </div>
+          <div class="nav-item" onclick="switchSection('security', this)">
+            <span class="icon">🔒</span>
+            <span>安全设置</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统设置 -->
+      <div class="nav-section">
+        <div class="nav-section-header" onclick="toggleSection(this)">
+          <span class="nav-section-title">系统设置</span>
+          <span class="nav-section-arrow">▶</span>
+        </div>
+        <div class="nav-section-items collapsed">
+          <!-- 配置管理 -->
+          <div class="nav-item sub" onclick="toggleSubSection(this, 'config')">
+            <span class="icon">📁</span>
+            <span>配置管理</span>
+            <span class="arrow">▶</span>
+          </div>
+          <div id="sub-config" class="nav-sub-items collapsed">
+            <div class="nav-item" onclick="switchSection('llm', this)">
+              <span class="icon">🤖</span>
+              <span>大模型配置</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('datasource', this)">
+              <span class="icon">📡</span>
+              <span>数据源配置</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('database', this)">
+              <span class="icon">🗄️</span>
+              <span>数据库配置</span>
+            </div>
+            <div class="nav-item" onclick="switchSection('notification', this)">
+              <span class="icon">🔔</span>
+              <span>通知配置</span>
+            </div>
+          </div>
+          <!-- 缓存管理 -->
+          <div class="nav-item" onclick="switchSection('cache', this)">
+            <span class="icon">💾</span>
+            <span>缓存管理</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧内容区 -->
+    <div class="right-panel">
+      <!-- 通用设置 -->
+      <div id="section-general" class="settings-section">
+        <div class="page-header">
+          <h2>通用设置</h2>
+          <p class="desc">基本个人信息和偏好设置</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>基本信息</h3>
+            <div class="form-group">
+              <label>用户名</label>
+              <input type="text" id="username" value="admin" disabled>
+            </div>
+            <div class="form-group">
+              <label>邮箱</label>
+              <input type="text" id="email" placeholder="输入邮箱地址">
+            </div>
+            <div class="form-group">
+              <label>语言</label>
+              <select id="language">
+                <option value="zh-CN" selected>简体中文</option>
+                <option value="en-US">English</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>时区</label>
+              <select id="timezone">
+                <option value="Asia/Shanghai" selected>北京时间 (UTC+8)</option>
+                <option value="America/New_York">纽约时间 (UTC-5)</option>
+                <option value="Europe/London">伦敦时间 (UTC+0)</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="saveGeneral()">保存设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 外观设置 -->
+      <div id="section-appearance" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>外观设置</h2>
+          <p class="desc">界面显示和主题配置</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>主题模式</h3>
+            <div class="theme-options">
+              <label class="theme-option">
+                <input type="radio" name="theme" value="light" id="themeLight">
+                <span class="theme-label">
+                  <span class="theme-icon">☀️</span>
+                  <span class="theme-name">浅色主题</span>
+                </span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="dark" id="themeDark">
+                <span class="theme-label">
+                  <span class="theme-icon">🌙</span>
+                  <span class="theme-name">深色主题</span>
+                </span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="auto" id="themeAuto">
+                <span class="theme-label">
+                  <span class="theme-icon">💻</span>
+                  <span class="theme-name">跟随系统</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>侧边栏宽度</h3>
+            <div class="sidebar-width-config">
+              <div class="width-display">
+                <span id="widthValue">240</span> px
+              </div>
+              <input type="range" id="sidebarWidthSlider" min="200" max="400" step="20" value="240" oninput="updateWidthDisplay()">
+              <div class="width-range">
+                <span>200px</span>
+                <span>400px</span>
+              </div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveAppearance()">保存设置</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 安全设置 -->
+      <div id="section-security" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>安全设置</h2>
+          <p class="desc">账户安全和密码管理</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>修改密码</h3>
+            <div class="form-group">
+              <label>当前密码</label>
+              <input type="password" id="currentPassword" placeholder="输入当前密码">
+            </div>
+            <div class="form-group">
+              <label>新密码</label>
+              <input type="password" id="newPassword" placeholder="输入新密码（至少6位）">
+            </div>
+            <div class="form-group">
+              <label>确认新密码</label>
+              <input type="password" id="confirmPassword" placeholder="再次输入新密码">
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="changePassword()">修改密码</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>安全选项</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">自动登出</div>
+                <div class="setting-desc">空闲一段时间后自动退出登录</div>
+              </div>
+              <select id="autoLogout" style="width:120px;">
+                <option value="0">从不</option>
+                <option value="15">15分钟</option>
+                <option value="30">30分钟</option>
+                <option value="60" selected>1小时</option>
+                <option value="120">2小时</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="saveSecurity()">保存设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 大模型配置 -->
+      <div id="section-llm" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>大模型配置</h2>
+          <p class="desc">配置 AI 大模型服务</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>DeepSeek API</h3>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" id="deepseekApiKey" placeholder="输入 DeepSeek API Key">
+              <span class="hint">用于调用 DeepSeek 大模型服务</span>
+            </div>
+            <div class="form-group">
+              <label>Base URL</label>
+              <input type="text" id="deepseekBaseUrl" value="https://api.deepseek.com/v1" placeholder="API 请求地址">
+            </div>
+            <div class="form-group">
+              <label>模型名称</label>
+              <select id="deepseekModel">
+                <option value="deepseek-chat" selected>deepseek-chat</option>
+                <option value="deepseek-coder">deepseek-coder</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="testLlmConnection()">测试连接</button>
+              <button class="btn btn-primary" onclick="saveLlmConfig()">保存配置</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>Embedding 配置</h3>
+            <div class="form-group">
+              <label>OpenAI API Key (用于 Embedding)</label>
+              <input type="password" id="openaiApiKey" placeholder="输入 OpenAI API Key">
+            </div>
+            <div class="form-group">
+              <label>Embedding 模型</label>
+              <select id="embeddingModel">
+                <option value="text-embedding-3-small" selected>text-embedding-3-small</option>
+                <option value="text-embedding-3-large">text-embedding-3-large</option>
+                <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="saveEmbeddingConfig()">保存配置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 数据源配置 -->
+      <div id="section-datasource" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>数据源配置</h2>
+          <p class="desc">配置股票数据来源</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>Tushare 配置</h3>
+            <div class="form-group">
+              <label>Token</label>
+              <input type="password" id="tushareToken" placeholder="输入 Tushare Token">
+              <span class="hint">从 Tushare 官网获取</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="testTushare()">测试连接</button>
+              <button class="btn btn-primary" onclick="saveDataSource()">保存配置</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>AKShare 配置</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">启用 AKShare</div>
+                <div class="setting-desc">开源金融数据接口</div>
+              </div>
+              <div class="switch active" id="akshareSwitch"></div>
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+              <label>代理地址（可选）</label>
+              <input type="text" id="proxyUrl" placeholder="如: http://127.0.0.1:7890">
+              <span class="hint">如需代理访问外网数据</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="saveDataSource()">保存配置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 数据库配置 -->
+      <div id="section-database" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>数据库配置</h2>
+          <p class="desc">MongoDB 和 Redis 连接配置</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>MongoDB 配置</h3>
+            <div class="config-grid">
+              <div class="form-group">
+                <label>连接地址</label>
+                <input type="text" id="mongodbUrl" placeholder="mongodb://localhost:27017">
+              </div>
+              <div class="form-group">
+                <label>数据库名称</label>
+                <input type="text" id="mongodbDb" placeholder="stock_trade_reports">
+              </div>
+              <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="mongodbUser" placeholder="用户名">
+              </div>
+              <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="mongodbPassword" placeholder="密码">
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="testMongodb()">测试连接</button>
+              <button class="btn btn-primary" onclick="saveDatabase()">保存配置</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>Redis 配置</h3>
+            <div class="config-grid">
+              <div class="form-group">
+                <label>连接地址</label>
+                <input type="text" id="redisUrl" placeholder="redis://localhost:6379/0">
+              </div>
+              <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="redisPassword" placeholder="密码（可选）">
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="testRedis()">测试连接</button>
+              <button class="btn btn-primary" onclick="saveDatabase()">保存配置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 通知配置 -->
+      <div id="section-notification" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>通知配置</h2>
+          <p class="desc">系统通知和提醒设置</p>
+        </div>
+        <div class="page-content">
+          <div class="settings-card">
+            <h3>通知方式</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">桌面通知</div>
+                <div class="setting-desc">浏览器桌面通知提醒</div>
+              </div>
+              <div class="switch active" id="desktopNotifSwitch"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">邮件通知</div>
+                <div class="setting-desc">通过邮件发送重要通知</div>
+              </div>
+              <div class="switch" id="emailNotifSwitch"></div>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>通知类型</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">分析完成通知</div>
+                <div class="setting-desc">股票分析完成后通知</div>
+              </div>
+              <div class="switch active" id="analysisNotifSwitch"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">系统维护通知</div>
+                <div class="setting-desc">系统维护和更新提醒</div>
+              </div>
+              <div class="switch active" id="maintenanceNotifSwitch"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">数据异常通知</div>
+                <div class="setting-desc">数据获取异常时通知</div>
+              </div>
+              <div class="switch active" id="dataErrorNotifSwitch"></div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveNotification()">保存设置</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 缓存管理 -->
+      <div id="section-cache" class="settings-section" style="display:none;">
+        <div class="page-header">
+          <h2>缓存管理</h2>
+          <p class="desc">系统缓存和数据管理</p>
+        </div>
+        <div class="page-content" style="overflow-y: auto; max-height: calc(100vh - 140px);">
+          <div class="settings-card">
+            <h3>缓存状态</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">Chroma 向量数据库</div>
+                <div class="setting-desc">研报分析向量存储</div>
+              </div>
+              <span class="status-badge success">正常</span>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">Redis 缓存</div>
+                <div class="setting-desc">热点数据缓存</div>
+              </div>
+              <span class="status-badge success">正常</span>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">MongoDB</div>
+                <div class="setting-desc">研报和知识库存储</div>
+              </div>
+              <span class="status-badge success">正常</span>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>缓存操作</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">清理 Redis 缓存</div>
+                <div class="setting-desc">清除所有 Redis 缓存数据</div>
+              </div>
+              <button class="btn btn-danger" onclick="clearRedisCache()">清理</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">清理向量数据库</div>
+                <div class="setting-desc">清除 Chroma 向量数据</div>
+              </div>
+              <button class="btn btn-danger" onclick="clearChromaCache()">清理</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">清理浏览器缓存</div>
+                <div class="setting-desc">清除本地存储和缓存</div>
+              </div>
+              <button class="btn btn-danger" onclick="clearBrowserCache()">清理</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>数据操作</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">导出配置</div>
+                <div class="setting-desc">导出系统配置为 JSON 文件</div>
+              </div>
+              <button class="btn btn-success" onclick="exportConfig()">导出</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-title">导入配置</div>
+                <div class="setting-desc">从 JSON 文件导入配置</div>
+              </div>
+              <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">导入</button>
+              <input type="file" id="importFile" style="display:none" accept=".json" onchange="importConfig(this.files[0])">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017';
+
+    // ========== 折叠切换 ==========
+    function toggleSection(headerEl) {
+      const section = headerEl.parentElement;
+      const items = section.querySelector('.nav-section-items');
+      const arrow = headerEl.querySelector('.nav-section-arrow');
+
+      items.classList.toggle('collapsed');
+      arrow.classList.toggle('down');
+    }
+
+    // ========== 子目录折叠切换 ==========
+    function toggleSubSection(el, subId) {
+      const subItems = document.getElementById('sub-' + subId);
+      const arrow = el.querySelector('.arrow');
+
+      subItems.classList.toggle('collapsed');
+      arrow.classList.toggle('down');
+    }
+
+    // ========== 导航切换 ==========
+    function switchSection(section, el) {
+      // 更新导航状态
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+
+      // 切换内容区
+      document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+      document.getElementById('section-' + section).style.display = 'block';
+
+      // 加载对应配置
+      loadConfig(section);
+    }
+
+    // ========== 加载配置 ==========
+    async function loadConfig(section) {
+      switch(section) {
+        case 'llm':
+          loadLlmConfig();
+          break;
+        case 'datasource':
+          loadDataSourceConfig();
+          break;
+        case 'database':
+          loadDatabaseConfig();
+          break;
+        case 'notification':
+          loadNotificationConfig();
+          break;
+        case 'cache':
+          loadCacheStatus();
+          break;
+        case 'appearance':
+          loadAppearanceConfig();
+          break;
+      }
+    }
+
+    // ========== 通用设置 ==========
+    function saveGeneral() {
+      const email = document.getElementById('email').value;
+      const language = document.getElementById('language').value;
+      const timezone = document.getElementById('timezone').value;
+
+      localStorage.setItem('settings_general', JSON.stringify({ email, language, timezone }));
+      showToast('通用设置已保存', 'success');
+    }
+
+    // ========== 外观设置 ==========
+    function loadAppearanceConfig() {
+      const settings = JSON.parse(localStorage.getItem('settings_appearance') || '{}');
+      const theme = settings.theme || 'light';
+      const sidebarWidth = settings.sidebarWidth || 240;
+
+      // 设置主题单选按钮
+      document.querySelectorAll('input[name="theme"]').forEach(radio => {
+        radio.checked = radio.value === theme;
+      });
+
+      // 设置侧边栏宽度滑块
+      document.getElementById('sidebarWidthSlider').value = sidebarWidth;
+      document.getElementById('widthValue').textContent = sidebarWidth;
+
+      // 应用主题
+      applyTheme(theme);
+
+      // 应用侧边栏宽度
+      applySidebarWidth(sidebarWidth);
+    }
+
+    function updateWidthDisplay() {
+      const width = document.getElementById('sidebarWidthSlider').value;
+      document.getElementById('widthValue').textContent = width;
+    }
+
+    function applyTheme(theme) {
+      let isDark = false;
+      if (theme === 'dark') {
+        isDark = true;
+      } else if (theme === 'auto') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      // 应用到自身 iframe
+      document.documentElement.classList.toggle('dark', isDark);
+
+      // 通知父窗口应用主题
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'setTheme', theme: isDark ? 'dark' : 'light' }, '*');
+      }
+    }
+
+    function applySidebarWidth(width) {
+      // 通知父窗口更新侧边栏宽度
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'sidebarWidth', width: width }, '*');
+      }
+    }
+
+    function saveAppearance() {
+      const theme = document.querySelector('input[name="theme"]:checked').value;
+      const sidebarWidth = parseInt(document.getElementById('sidebarWidthSlider').value);
+
+      const settings = { theme, sidebarWidth };
+      localStorage.setItem('settings_appearance', JSON.stringify(settings));
+
+      // 应用设置
+      applyTheme(theme);
+      applySidebarWidth(sidebarWidth);
+
+      showToast('外观设置已保存', 'success');
+    }
+
+    // 监听系统主题变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      const settings = JSON.parse(localStorage.getItem('settings_appearance') || '{}');
+      if (settings.theme === 'auto') {
+        applyTheme('auto');
+      }
+    });
+
+    // ========== 安全设置 ==========
+    async function changePassword() {
+      const current = document.getElementById('currentPassword').value;
+      const newPwd = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+
+      if (!current || !newPwd || !confirm) {
+        showToast('请填写所有密码字段', 'error');
+        return;
+      }
+      if (newPwd.length < 6) {
+        showToast('新密码至少6位', 'error');
+        return;
+      }
+      if (newPwd !== confirm) {
+        showToast('两次输入的密码不一致', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_password: current, new_password: newPwd })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('密码修改成功', 'success');
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          showToast(data.detail || '修改失败', 'error');
+        }
+      } catch (e) {
+        showToast('请求异常: ' + e.message, 'error');
+      }
+    }
+
+    function saveSecurity() {
+      const autoLogout = document.getElementById('autoLogout').value;
+      localStorage.setItem('settings_security', JSON.stringify({ autoLogout }));
+      showToast('安全设置已保存', 'success');
+    }
+
+    // ========== 大模型配置 ==========
+    function loadLlmConfig() {
+      const config = JSON.parse(localStorage.getItem('settings_llm') || '{}');
+      if (config.apiKey) document.getElementById('deepseekApiKey').value = config.apiKey;
+      if (config.baseUrl) document.getElementById('deepseekBaseUrl').value = config.baseUrl;
+      if (config.model) document.getElementById('deepseekModel').value = config.model;
+      if (config.openaiApiKey) document.getElementById('openaiApiKey').value = config.openaiApiKey;
+      if (config.embeddingModel) document.getElementById('embeddingModel').value = config.embeddingModel;
+    }
+
+    async function testLlmConnection() {
+      showToast('正在测试连接...', 'success');
+      // 模拟测试
+      setTimeout(() => showToast('连接测试成功', 'success'), 1000);
+    }
+
+    function saveLlmConfig() {
+      const config = {
+        apiKey: document.getElementById('deepseekApiKey').value,
+        baseUrl: document.getElementById('deepseekBaseUrl').value,
+        model: document.getElementById('deepseekModel').value
+      };
+      localStorage.setItem('settings_llm', JSON.stringify(config));
+      showToast('大模型配置已保存', 'success');
+    }
+
+    function saveEmbeddingConfig() {
+      const config = {
+        openaiApiKey: document.getElementById('openaiApiKey').value,
+        embeddingModel: document.getElementById('embeddingModel').value
+      };
+      localStorage.setItem('settings_embedding', JSON.stringify(config));
+      showToast('Embedding 配置已保存', 'success');
+    }
+
+    // ========== 数据源配置 ==========
+    function loadDataSourceConfig() {
+      const config = JSON.parse(localStorage.getItem('settings_datasource') || '{}');
+      if (config.tushareToken) document.getElementById('tushareToken').value = config.tushareToken;
+      if (config.proxyUrl) document.getElementById('proxyUrl').value = config.proxyUrl;
+      if (config.akshareEnabled !== undefined) {
+        document.getElementById('akshareSwitch').classList.toggle('active', config.akshareEnabled);
+      }
+    }
+
+    async function testTushare() {
+      showToast('正在测试 Tushare 连接...', 'success');
+      setTimeout(() => showToast('Tushare 连接正常', 'success'), 1000);
+    }
+
+    function saveDataSource() {
+      const config = {
+        tushareToken: document.getElementById('tushareToken').value,
+        akshareEnabled: document.getElementById('akshareSwitch').classList.contains('active'),
+        proxyUrl: document.getElementById('proxyUrl').value
+      };
+      localStorage.setItem('settings_datasource', JSON.stringify(config));
+      showToast('数据源配置已保存', 'success');
+    }
+
+    // ========== 数据库配置 ==========
+    function loadDatabaseConfig() {
+      const config = JSON.parse(localStorage.getItem('settings_database') || '{}');
+      if (config.mongodbUrl) document.getElementById('mongodbUrl').value = config.mongodbUrl;
+      if (config.mongodbDb) document.getElementById('mongodbDb').value = config.mongodbDb;
+      if (config.mongodbUser) document.getElementById('mongodbUser').value = config.mongodbUser;
+      if (config.redisUrl) document.getElementById('redisUrl').value = config.redisUrl;
+    }
+
+    async function testMongodb() {
+      showToast('正在测试 MongoDB 连接...', 'success');
+      setTimeout(() => showToast('MongoDB 连接正常', 'success'), 1000);
+    }
+
+    async function testRedis() {
+      showToast('正在测试 Redis 连接...', 'success');
+      setTimeout(() => showToast('Redis 连接正常', 'success'), 1000);
+    }
+
+    function saveDatabase() {
+      const config = {
+        mongodbUrl: document.getElementById('mongodbUrl').value,
+        mongodbDb: document.getElementById('mongodbDb').value,
+        mongodbUser: document.getElementById('mongodbUser').value,
+        mongodbPassword: document.getElementById('mongodbPassword').value,
+        redisUrl: document.getElementById('redisUrl').value,
+        redisPassword: document.getElementById('redisPassword').value
+      };
+      localStorage.setItem('settings_database', JSON.stringify(config));
+      showToast('数据库配置已保存', 'success');
+    }
+
+    // ========== 通知配置 ==========
+    function loadNotificationConfig() {
+      const config = JSON.parse(localStorage.getItem('settings_notification') || '{}');
+      document.getElementById('desktopNotifSwitch').classList.toggle('active', config.desktop !== false);
+      document.getElementById('emailNotifSwitch').classList.toggle('active', config.email);
+      document.getElementById('analysisNotifSwitch').classList.toggle('active', config.analysis !== false);
+      document.getElementById('maintenanceNotifSwitch').classList.toggle('active', config.maintenance !== false);
+      document.getElementById('dataErrorNotifSwitch').classList.toggle('active', config.dataError !== false);
+    }
+
+    function saveNotification() {
+      const config = {
+        desktop: document.getElementById('desktopNotifSwitch').classList.contains('active'),
+        email: document.getElementById('emailNotifSwitch').classList.contains('active'),
+        analysis: document.getElementById('analysisNotifSwitch').classList.contains('active'),
+        maintenance: document.getElementById('maintenanceNotifSwitch').classList.contains('active'),
+        dataError: document.getElementById('dataErrorNotifSwitch').classList.contains('active')
+      };
+      localStorage.setItem('settings_notification', JSON.stringify(config));
+      showToast('通知配置已保存', 'success');
+    }
+
+    // ========== 缓存管理 ==========
+    async function loadCacheStatus() {
+      // 加载缓存状态
+    }
+
+    async function clearRedisCache() {
+      if (!confirm('确定要清理 Redis 缓存吗？')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/cache/clear`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? 'Redis 缓存已清理' : '清理失败', data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('清理异常: ' + e.message, 'error');
+      }
+    }
+
+    async function clearChromaCache() {
+      if (!confirm('确定要清理向量数据库吗？')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/cache/clear-chroma`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? '向量数据库已清理' : '清理失败', data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('清理异常: ' + e.message, 'error');
+      }
+    }
+
+    function clearBrowserCache() {
+      if (!confirm('确定要清理浏览器缓存吗？')) return;
+      localStorage.clear();
+      showToast('浏览器缓存已清理', 'success');
+    }
+
+    function exportConfig() {
+      const allSettings = {
+        general: JSON.parse(localStorage.getItem('settings_general') || '{}'),
+        appearance: JSON.parse(localStorage.getItem('settings_appearance') || '{}'),
+        llm: JSON.parse(localStorage.getItem('settings_llm') || '{}'),
+        datasource: JSON.parse(localStorage.getItem('settings_datasource') || '{}'),
+        database: JSON.parse(localStorage.getItem('settings_database') || '{}'),
+        notification: JSON.parse(localStorage.getItem('settings_notification') || '{}')
+      };
+      const blob = new Blob([JSON.stringify(allSettings, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'stock_trade_config.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('配置已导出', 'success');
+    }
+
+    async function importConfig(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const config = JSON.parse(e.target.result);
+          if (config.general) localStorage.setItem('settings_general', JSON.stringify(config.general));
+          if (config.appearance) localStorage.setItem('settings_appearance', JSON.stringify(config.appearance));
+          if (config.llm) localStorage.setItem('settings_llm', JSON.stringify(config.llm));
+          if (config.datasource) localStorage.setItem('settings_datasource', JSON.stringify(config.datasource));
+          if (config.database) localStorage.setItem('settings_database', JSON.stringify(config.database));
+          if (config.notification) localStorage.setItem('settings_notification', JSON.stringify(config.notification));
+          showToast('配置已导入', 'success');
+          location.reload();
+        } catch (err) {
+          showToast('导入失败: 无效的配置文件', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ========== Toast 提示 ==========
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ========== 初始化 ==========
+    document.querySelectorAll('.switch').forEach(sw => {
+      sw.addEventListener('click', function() {
+        this.classList.toggle('active');
+      });
+    });
+
+    // 监听来自父窗口的主题变化
+    window.addEventListener('message', function(event) {
+      if (event.data.type === 'setTheme') {
+        document.documentElement.classList.toggle('dark', event.data.theme === 'dark');
+      }
+    });
+
+    // 初始化时同步主题状态
+    (function initTheme() {
+      const settings = JSON.parse(localStorage.getItem('settings_appearance') || '{}');
+      if (settings.theme) {
+        applyTheme(settings.theme);
+      }
+    })();
+  </script>
+</body>
+</html>

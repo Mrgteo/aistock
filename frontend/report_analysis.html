@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 研报分析</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --active-bg: #eff6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 左侧导航 */
+    .left-nav {
+      width: 200px;
+      min-width: 200px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+    }
+    .nav-item {
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: #f8fafc; color: var(--text-main); }
+    .nav-item.active { background: var(--active-bg); color: var(--primary); border-left-color: var(--primary); }
+    .nav-item .icon { font-size: 16px; }
+
+    /* 右侧内容区 */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+
+    .page-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .page-header h2 { font-size: 16px; font-weight: 600; }
+    .page-header .desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .page-header-left { flex: 1; }
+
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+
+    /* 上传区域 */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafbfc;
+      margin-bottom: 16px;
+    }
+    .upload-zone:hover { border-color: var(--primary); background: var(--active-bg); }
+    .upload-zone.dragover { border-color: var(--primary); background: var(--active-bg); }
+    .upload-zone .icon { font-size: 36px; margin-bottom: 10px; }
+    .upload-zone p { font-size: 13px; color: var(--text-muted); }
+    .upload-zone .formats { font-size: 11px; margin-top: 4px; }
+    .upload-zone.has-file { border-color: var(--success); background: #f0fdf4; }
+    .upload-zone.has-file .icon { color: var(--success); }
+
+    /* 表单 */
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    input[type="text"], select {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      background: #f8fafc;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    /* 按钮 */
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fee2e2; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+    /* 历史列表 */
+    .history-item {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .history-item:hover { border-color: var(--primary); background: #f8fafc; }
+    .history-item .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .history-item .title { font-size: 13px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item .time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .history-item .summary { font-size: 11px; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item .actions { display: flex; gap: 6px; margin-top: 8px; }
+    .history-item .actions .btn { padding: 4px 10px; font-size: 11px; border-radius: 4px; }
+
+    /* 分析结果 */
+    .result-section { margin-bottom: 16px; }
+    .result-section:last-child { margin-bottom: 0; }
+    .result-section h4 { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+    .stock-list, .industry-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .stock-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 500;
+      background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af;
+    }
+    .stock-tag.bullish { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+    .stock-tag.bearish { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+    .industry-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 6px; font-size: 12px;
+      background: #faf5ff; border: 1px solid #e9d5ff; color: #6b21a8;
+    }
+    .sentiment { font-size: 10px; padding: 2px 5px; border-radius: 3px; }
+    .sentiment.positive { background: #d1fae5; color: #065f46; }
+    .sentiment.neutral { background: #f1f5f9; color: #475569; }
+    .sentiment.negative { background: #fee2e2; color: #991b1b; }
+
+    .ai-analysis {
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+      word-break: break-word;
+      overflow-y: auto;
+    }
+    .ai-analysis-content {
+      color: #334155;
+    }
+    .ai-analysis-content h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 24px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      line-height: 1.4;
+    }
+    .ai-analysis-content h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e40af;
+      margin: 22px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #bfdbfe;
+      line-height: 1.4;
+    }
+    .ai-analysis-content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e40af;
+      margin: 18px 0 10px 0;
+      line-height: 1.4;
+    }
+    .ai-analysis-content h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #3730a3;
+      margin: 14px 0 8px 0;
+      line-height: 1.4;
+    }
+    .ai-analysis-content p {
+      margin: 0 0 14px 0;
+      line-height: 2;
+      color: #374151;
+    }
+    .ai-analysis-content strong, .ai-analysis-content b {
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .ai-analysis-content em, .ai-analysis-content i {
+      font-style: italic;
+      color: #475569;
+    }
+    .ai-analysis-content ul, .ai-analysis-content ol {
+      margin: 10px 0 14px 0;
+      padding-left: 24px;
+    }
+    .ai-analysis-content li {
+      margin-bottom: 8px;
+      line-height: 1.8;
+      color: #374151;
+    }
+    .ai-analysis-content ul li::marker {
+      color: #2563eb;
+    }
+    .ai-analysis-content ol li::marker {
+      color: #2563eb;
+      font-weight: 600;
+    }
+    .ai-analysis-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13px;
+      overflow-x: auto;
+      display: block;
+    }
+    .ai-analysis-content thead {
+      background: #eff6ff;
+    }
+    .ai-analysis-content th {
+      background: #dbeafe;
+      color: #1e293b;
+      font-weight: 600;
+      padding: 10px 12px;
+      text-align: left;
+      border: 1px solid #93c5fd;
+    }
+    .ai-analysis-content td {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    .ai-analysis-content tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    .ai-analysis-content tr:hover td {
+      background: #f0f9ff;
+    }
+    .ai-analysis-content hr {
+      border: none;
+      border-top: 2px solid #e2e8f0;
+      margin: 20px 0;
+    }
+    .ai-analysis-content blockquote {
+      margin: 14px 0;
+      padding: 12px 16px;
+      background: #fefce8;
+      border-left: 4px solid #f59e0b;
+      border-radius: 0 4px 4px 0;
+      color: #57534e;
+      font-style: italic;
+      line-height: 1.8;
+    }
+    .ai-analysis .sources {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* 状态 */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px; color: var(--text-muted);
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-state h3 { font-size: 14px; color: var(--text-main); margin-bottom: 6px; }
+
+    /* 返回按钮 */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: #e2e8f0; }
+
+    /* 详情头部 */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .detail-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* 知识库 */
+    .kb-card {
+      padding: 14px;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .kb-card:last-child { margin-bottom: 0; }
+    .kb-card .name { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .kb-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+    .kb-tag {
+      padding: 2px 6px;
+      background: #e0e7ff;
+      color: #3730a3;
+      border-radius: 3px;
+      font-size: 10px;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* 返回顶部按钮 */
+    .back-to-top-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      z-index: 100;
+      transition: all 0.2s;
+    }
+    .back-to-top-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AI 研报分析</h1>
+  </div>
+
+  <div class="main-container">
+    <!-- 左侧导航 -->
+    <div class="left-nav">
+      <div class="nav-item active" onclick="switchPage('upload')" id="nav-upload">
+        <span class="icon">📤</span>
+        <span>上传分析</span>
+      </div>
+      <div class="nav-item" onclick="switchPage('history')" id="nav-history">
+        <span class="icon">📜</span>
+        <span>分析历史</span>
+      </div>
+      <div class="nav-item" onclick="switchPage('knowledge')" id="nav-knowledge">
+        <span class="icon">📚</span>
+        <span>知识库</span>
+      </div>
+    </div>
+
+    <!-- 右侧内容区 -->
+    <div class="right-panel">
+      <!-- 上传分析页面 -->
+      <div id="page-upload" class="page">
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>上传研报并分析</h2>
+            <p class="desc">上传研报文件，AI 将自动分析涉及的 A 股标的和行业</p>
+          </div>
+        </div>
+        <div class="page-content">
+          <!-- 上传区域 -->
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="icon" id="uploadIcon">📄</div>
+            <p id="uploadText">拖拽文件到此处或点击选择</p>
+            <p class="formats" id="uploadFormats">支持 PDF、DOCX、TXT 格式</p>
+          </div>
+          <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.doc,.txt" onchange="handleFileSelect(this.files[0])">
+
+          <!-- 分析按钮 -->
+          <button class="btn btn-primary" id="analyzeBtn" onclick="startAnalyze()" style="width: 100%; margin-top: 16px;" disabled>
+            开始分析
+          </button>
+
+          <!-- 分析结果（在同一页面滚动查看） -->
+          <div id="analysisResult" style="display:none; margin-top: 16px;"></div>
+
+          <!-- 返回顶部按钮 -->
+          <button id="backToTopBtn" class="back-to-top-btn" onclick="scrollToTop()" style="display:none;">
+            ↑ 返回顶部
+          </button>
+        </div>
+      </div>
+
+      <!-- 分析历史页面 -->
+      <div id="page-history" class="page" style="display:none;">
+        <!-- 历史列表视图 -->
+        <div id="historyListView">
+          <div class="page-header">
+            <div class="page-header-left">
+              <h2>分析历史</h2>
+              <p class="desc">查看历史分析记录</p>
+            </div>
+          </div>
+          <div class="page-content" id="historyListContent">
+            <div id="historyList"></div>
+          </div>
+        </div>
+
+        <!-- 历史详情视图 -->
+        <div id="historyDetailView" style="display:none;">
+          <div class="page-header">
+            <button class="back-btn" onclick="backToHistoryList()">← 返回列表</button>
+          </div>
+          <div class="page-content" id="historyDetailContent"></div>
+        </div>
+      </div>
+
+      <!-- 知识库页面 -->
+      <div id="page-knowledge" class="page" style="display:none;">
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>知识库管理</h2>
+            <p class="desc">上传参考文档提升分析准确性</p>
+          </div>
+          <button class="btn btn-secondary" onclick="document.getElementById('kbFileInput').click()">
+            + 添加文件
+          </button>
+          <input type="file" id="kbFileInput" style="display:none" accept=".pdf,.docx,.doc,.txt" onchange="uploadKnowledgeFile(this.files[0])">
+        </div>
+        <div class="page-content" id="kbListContent">
+          <div id="kbList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017';
+    let currentPage = 'upload';
+    let selectedFile = null;
+    let analysisHistory = [];
+    let kbList = [];
+
+    // ========== 页面切换 ==========
+    function switchPage(page) {
+      currentPage = page;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('nav-' + page).classList.add('active');
+      document.querySelectorAll('.page').forEach(el => el.style.display = 'none');
+
+      const pageEl = document.getElementById('page-' + page);
+      pageEl.style.display = 'flex';
+      pageEl.style.flexDirection = 'column';
+
+      if (page === 'history') {
+        loadAnalysisHistory();
+        backToHistoryList();
+      }
+      if (page === 'knowledge') loadKnowledge();
+    }
+
+    // ========== 上传分析 ==========
+    const uploadZone = document.getElementById('uploadZone');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+      uploadZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+    });
+    ['dragenter', 'dragover'].forEach(evt => {
+      uploadZone.addEventListener(evt, () => uploadZone.classList.add('dragover'));
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      uploadZone.addEventListener(evt, () => uploadZone.classList.remove('dragover'));
+    });
+    uploadZone.addEventListener('drop', e => {
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileSelect(file);
+    });
+
+    function handleFileSelect(file) {
+      if (!file) return;
+      selectedFile = file;
+      uploadZone.classList.add('has-file');
+      document.getElementById('uploadIcon').textContent = '✅';
+      document.getElementById('uploadText').textContent = file.name;
+      document.getElementById('uploadFormats').textContent = '已选择: ' + (file.size / 1024).toFixed(1) + ' KB';
+
+      // 隐藏返回顶部按钮并滚动到顶部
+      hideBackToTopButton();
+      scrollToTop();
+
+      // 自动上传并提取标题和关键词
+      autoUpload();
+    }
+
+    let currentReportId = null;
+
+    async function autoUpload() {
+      if (!selectedFile) return;
+
+      const btn = document.getElementById('analyzeBtn');
+      const resultDiv = document.getElementById('analysisResult');
+
+      btn.disabled = true;
+      btn.textContent = '上传中...';
+
+      resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>上传研报中...</div>';
+      resultDiv.style.display = 'block';
+
+      try {
+        // 1. 使用文件名作为临时标题上传（快速返回）
+        const tempTitle = selectedFile.name.replace(/\.[^/.]+$/, '');
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('title', tempTitle);
+        formData.append('report_type', '行业报告');
+
+        const uploadRes = await fetch(`${API_BASE}/api/report/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+
+        if (!uploadData.success) {
+          throw new Error(uploadData.detail || '上传失败');
+        }
+
+        currentReportId = uploadData.report_id;
+
+        // 2. 立即启用分析按钮，不等待后台处理
+        btn.disabled = false;
+        btn.textContent = '开始分析';
+        resultDiv.innerHTML = '<div class="card"><div class="empty-state"><div class="icon">✅</div><h3>上传成功</h3><p>点击"开始分析"进行AI分析</p></div></div>';
+      } catch (e) {
+        resultDiv.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">❌</div><h3>上传失败</h3><p>${e.message}</p></div></div>`;
+        btn.disabled = true;
+        btn.textContent = '开始分析';
+      }
+    }
+
+    async function startAnalyze() {
+      if (!currentReportId) {
+        alert('请先上传文件');
+        return;
+      }
+
+      const btn = document.getElementById('analyzeBtn');
+      btn.disabled = true;
+      btn.textContent = '准备中...';
+
+      const resultDiv = document.getElementById('analysisResult');
+
+      try {
+        // 1. 检查文档是否处理完成
+        resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>正在检查文档状态...</div>';
+
+        let status = 'processing';
+        let attempts = 0;
+        while (status === 'processing' && attempts < 60) {
+          await sleep(500);
+          const statusRes = await fetch(`${API_BASE}/api/report/${currentReportId}`);
+          const statusData = await statusRes.json();
+          if (statusData.success) {
+            status = statusData.report.status;
+            attempts++;
+            if (status === 'processing') {
+              resultDiv.innerHTML = `<div class="loading"><div class="spinner"></div>正在处理文档... (${attempts * 0.5}s)</div>`;
+            }
+          } else {
+            break;
+          }
+        }
+
+        if (status !== 'processed') {
+          resultDiv.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">⚠️</div><h3>文档处理超时</h3><p>请稍后重试</p></div></div>`;
+          btn.disabled = false;
+          btn.textContent = '开始分析';
+          return;
+        }
+
+        // 2. 执行分析
+        btn.textContent = '分析中...';
+        resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>AI 正在分析中...</div>';
+
+        const analyzeRes = await fetch(`${API_BASE}/api/report/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            report_id: currentReportId,
+            query: '分析报告内容，提取报告标题和关键词，列出涉及的A股标的和行业板块，说明利好还是利空',
+            use_knowledge_base: true,
+            top_k: 5
+          })
+        });
+        const analyzeData = await analyzeRes.json();
+
+        if (analyzeData.success) {
+          renderAnalysisResults(analyzeData);
+          loadAnalysisHistory();
+          // 滚动到结果区域
+          resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // 显示返回顶部按钮
+          showBackToTopButton();
+        } else {
+          resultDiv.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">❌</div><h3>分析失败</h3><p>${analyzeData.error || '未知错误'}</p></div></div>`;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">❌</div><h3>请求异常</h3><p>${e.message}</p></div></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '开始分析';
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function renderAnalysisResults(data) {
+      const resultDiv = document.getElementById('analysisResult');
+      const stocks = data.mentioned_stocks || [];
+      const industries = data.mentioned_industries || [];
+      const aiAnalysisRaw = data.ai_analysis || '';
+      // 使用 renderMarkdown 渲染带样式的 AI 分析内容
+      const aiAnalysisHtml = renderMarkdown(aiAnalysisRaw);
+
+      resultDiv.innerHTML = `
+        <div class="card">
+          <h3>📊 ${escapeHtml(data.report_title || '分析结果')}</h3>
+          ${stocks.length > 0 ? `
+          <div class="result-section">
+            <h4>涉及 A 股标的</h4>
+            <div class="stock-list">
+              ${stocks.map(s => `
+                <span class="stock-tag ${s.sentiment === '利好' ? 'bullish' : s.sentiment === '利空' ? 'bearish' : ''}">
+                  ${s.code} ${s.name}
+                  <span class="sentiment ${s.sentiment === '利好' ? 'positive' : s.sentiment === '利空' ? 'negative' : 'neutral'}">${s.sentiment || '中性'}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+          ${industries.length > 0 ? `
+          <div class="result-section">
+            <h4>涉及行业板块</h4>
+            <div class="industry-list">
+              ${industries.map(i => `
+                <span class="industry-tag">
+                  ${i.industry}
+                  <span class="sentiment ${i.sentiment === '利好' ? 'positive' : i.sentiment === '利空' ? 'negative' : 'neutral'}">${i.sentiment || '中性'}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+          ${aiAnalysisHtml ? `
+          <div class="result-section">
+            <h4>AI 分析报告</h4>
+            <div class="ai-analysis">
+              <div class="ai-analysis-content">
+                ${aiAnalysisHtml}
+              </div>
+              ${data.sources && data.sources.length > 0 ? `
+              <div class="sources">
+                <strong>参考来源:</strong>
+                ${data.sources.map(s => `第${s.page || s.chunk_id}页 (相似度: ${((s.score || 0) * 100).toFixed(1)}%)`).join('、')}
+              </div>
+              ` : ''}
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // ========== 分析历史 ==========
+    async function loadAnalysisHistory() {
+      try {
+        const res = await fetch(`${API_BASE}/api/report/history/all?limit=50`);
+        const data = await res.json();
+        if (data.success) {
+          analysisHistory = data.history || [];
+          renderAnalysisHistory();
+        }
+      } catch (e) {
+        console.error('加载分析历史失败:', e);
+      }
+    }
+
+    function renderAnalysisHistory() {
+      const container = document.getElementById('historyList');
+      if (analysisHistory.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3>暂无分析历史</h3>
+            <p>上传研报进行分析后，这里将显示历史记录</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = analysisHistory.map(h => {
+        const time = new Date(h.created_at).toLocaleString('zh-CN', {
+          month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+        return `
+          <div class="history-item">
+            <div class="row">
+              <span class="title">${escapeHtml(h.report_title || '未知报告')}</span>
+              <span class="time">${time}</span>
+            </div>
+            <div class="summary">${escapeHtml(h.summary || '')}</div>
+            <div class="actions">
+              <button class="btn btn-primary" onclick="showHistoryDetail('${h._id}')">查看详情</button>
+              <button class="btn btn-danger" onclick="deleteHistory('${h._id}', event)">删除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showHistoryDetail(analysisId) {
+      document.getElementById('historyListView').style.display = 'none';
+      document.getElementById('historyDetailView').style.display = 'flex';
+      document.getElementById('historyDetailView').style.flexDirection = 'column';
+
+      const contentDiv = document.getElementById('historyDetailContent');
+      contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
+
+      fetch(`${API_BASE}/api/report/history/detail/${analysisId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.analysis) {
+            const a = data.analysis;
+            renderHistoryDetail(a, contentDiv);
+          } else {
+            contentDiv.innerHTML = '<div class="empty-state"><div class="icon">❌</div><h3>加载失败</h3></div>';
+          }
+        })
+        .catch(e => {
+          contentDiv.innerHTML = `<div class="empty-state"><div class="icon">❌</div><h3>请求异常</h3><p>${e.message}</p></div>`;
+        });
+    }
+
+    function renderHistoryDetail(a, container) {
+      const stocks = a.mentioned_stocks || [];
+      const industries = a.mentioned_industries || [];
+      const ai_analysis_raw = a.ai_response || (a.result && a.result.ai_analysis) || '';
+      const sources = (a.result && a.result.sources) || [];
+      // 使用 renderMarkdown 渲染带样式的 AI 分析内容
+      const ai_analysis_html = renderMarkdown(ai_analysis_raw);
+
+      container.innerHTML = `
+        <div class="card">
+          <h3>📊 ${escapeHtml(a.report_title || '分析结果')}</h3>
+          ${stocks.length > 0 ? `
+          <div class="result-section">
+            <h4>涉及 A 股标的</h4>
+            <div class="stock-list">
+              ${stocks.map(s => `
+                <span class="stock-tag ${s.sentiment === '利好' ? 'bullish' : s.sentiment === '利空' ? 'bearish' : ''}">
+                  ${s.code} ${s.name}
+                  <span class="sentiment ${s.sentiment === '利好' ? 'positive' : s.sentiment === '利空' ? 'negative' : 'neutral'}">${s.sentiment || '中性'}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+          ${industries.length > 0 ? `
+          <div class="result-section">
+            <h4>涉及行业板块</h4>
+            <div class="industry-list">
+              ${industries.map(i => `
+                <span class="industry-tag">
+                  ${i.industry}
+                  <span class="sentiment ${i.sentiment === '利好' ? 'positive' : i.sentiment === '利空' ? 'negative' : 'neutral'}">${i.sentiment || '中性'}</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+          ${ai_analysis_html ? `
+          <div class="result-section">
+            <h4>AI 分析报告</h4>
+            <div class="ai-analysis">
+              <div class="ai-analysis-content">
+                ${ai_analysis_html}
+              </div>
+              ${sources.length > 0 ? `
+              <div class="sources">
+                <strong>参考来源:</strong>
+                ${sources.map(s => `第${s.page || s.chunk_id}页 (相似度: ${((s.score || 0) * 100).toFixed(1)}%)`).join('、')}
+              </div>
+              ` : ''}
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function backToHistoryList() {
+      document.getElementById('historyDetailView').style.display = 'none';
+      document.getElementById('historyListView').style.display = 'flex';
+      document.getElementById('historyListView').style.flexDirection = 'column';
+    }
+
+    async function deleteHistory(analysisId, event) {
+      event.stopPropagation();
+      if (!confirm('确定要删除这条分析记录吗？')) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/report/history/${analysisId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadAnalysisHistory();
+        } else {
+          alert('删除失败');
+        }
+      } catch (e) {
+        alert('删除异常: ' + e.message);
+      }
+    }
+
+    // ========== 知识库 ==========
+    async function loadKnowledge() {
+      try {
+        const res = await fetch(`${API_BASE}/api/report/knowledge/list?limit=50`);
+        const data = await res.json();
+        if (data.success) {
+          kbList = data.items || [];
+          renderKnowledgeList();
+        }
+      } catch (e) {
+        console.error('加载知识库失败:', e);
+      }
+    }
+
+    function renderKnowledgeList() {
+      const container = document.getElementById('kbList');
+      if (kbList.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📚</div>
+            <h3>暂无知识库文件</h3>
+            <p>上传参考文档可以在分析时获得更准确的结果</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = kbList.map(k => `
+        <div class="kb-card">
+          <div class="name">
+            📄 ${escapeHtml(k.title)}
+          </div>
+          ${k.metadata?.tags?.length ? `
+          <div class="kb-tags">
+            ${k.metadata.tags.map(t => `<span class="kb-tag">${escapeHtml(t)}</span>`).join('')}
+          </div>
+          ` : ''}
+          <div style="margin-top: 10px;">
+            <button onclick="deleteKnowledge('${k._id}')" class="btn btn-danger btn-sm">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function uploadKnowledgeFile(file) {
+      if (!file) return;
+      const title = file.name.replace(/\.[^/.]+$/, '');
+      const tags = prompt('请输入标签（多个用逗号分隔）:', '基本面,财务分析');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', title);
+        formData.append('tags', tags || '');
+        const res = await fetch(`${API_BASE}/api/report/knowledge/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+          alert('上传成功，正在索引...');
+          loadKnowledge();
+        } else {
+          alert('上传失败: ' + (data.detail || '未知错误'));
+        }
+      } catch (e) {
+        alert('上传异常: ' + e.message);
+      }
+    }
+
+    async function deleteKnowledge(kbId) {
+      if (!confirm('确定要删除这个知识库文件吗？')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/report/knowledge/${kbId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { loadKnowledge(); } else { alert('删除失败'); }
+      } catch (e) { alert('删除异常: ' + e.message); }
+    }
+
+    // 清理markdown格式和多余空行（用于纯文本场景）
+    function cleanMarkdown(text) {
+      if (!text) return '';
+      // 移除 HTML 标签（保留标签内文本）
+      text = text.replace(/<[^>]+>/g, '');
+      // 移除 markdown 表格
+      text = text.replace(/\|[^\n]*\|/g, '');
+      // 移除 ### ## # 标题标记（保留标题文字）
+      text = text.replace(/^#{1,6}\s+(.+)$/gm, '$1');
+      // 移除 ** 粗体
+      text = text.replace(/\*\*/g, '');
+      // 移除 * 斜体
+      text = text.replace(/\*/g, '');
+      // 移除 ` 行内代码
+      text = text.replace(/`/g, '');
+      // 移除 --- 等分隔线
+      text = text.replace(/^[-*_]{3,}$/gm, '');
+      // 移除 > 引用
+      text = text.replace(/^>\s*/gm, '');
+      // 移除 - + * 列表标记（保留内容）
+      text = text.replace(/^[-+*]\s+/gm, '');
+      // 移除行首的数字编号列表标记（保留内容）
+      text = text.replace(/^\d+\.\s+/gm, '');
+      // 将多个连续换行合并为单个换行（段落分隔）
+      text = text.replace(/\n{3,}/g, '\n');
+      // 移除只有空白字符的行
+      text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n');
+      return text.trim();
+    }
+
+    // 渲染后端返回的内容（可能是 HTML 或 markdown 混合）
+    function renderMarkdown(text) {
+      if (!text) return '';
+      // 移除危险标签
+      text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+      // 把 markdown 粗体 **text** 转为 <strong>text</strong>
+      text = text.replace(/\*\*(.+?)\*\*/g, '__strong__$1__/strong__');
+      // 把 markdown 斜体 *text* 转为 <em>text</em>
+      text = text.replace(/\*([^*\n]+?)\*/g, '__em__$1__/em__');
+      // 把剩余的单个 * 移除
+      text = text.replace(/\*/g, '');
+      // 恢复 strong 和 em
+      text = text.replace(/__strong__/g, '<strong>').replace(/__\/strong__/g, '</strong>');
+      text = text.replace(/__em__/g, '<em>').replace(/__\/em__/g, '</em>');
+      // 把 markdown 分隔线转为 <hr>
+      text = text.replace(/^[-*_]{3,}$/gm, '<hr>');
+      // 把 markdown 引用 > text 转为 <blockquote>
+      text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+      text = text.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+      // 把 - text 或 * text 列表项标记移除（保留内容）
+      text = text.replace(/^[-*+] (.+)$/gm, '• $1');
+      text = text.replace(/^(\d+)\. (.+)$/gm, '$1. $2');
+      // 把 ``` 包裹的代码块移除
+      text = text.replace(/```[\s\S]*?```/g, '');
+      // 移除剩余的 ` 行内代码
+      text = text.replace(/`([^`]+)`/g, '$1');
+      // 把纯文本按段落分割处理
+      const blocks = text.split(/\n{2,}/);
+      const rendered = blocks.map(block => {
+        block = block.trim();
+        if (!block) return '';
+        // 如果是已经是 HTML 标签（标题、列表、表格、blockquote、hr），直接返回
+        if (block.match(/^<(h[1-6]|ul|ol|li|table|thead|tbody|tr|th|td|blockquote|hr)(?:\s|>|>)/i)) {
+          // 标题里的 # 也要清理
+          block = block.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+          block = block.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+          block = block.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+          block = block.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+          return block;
+        }
+        // 纯文本段落用 <p> 包裹，并把单换行转为 <br>
+        // 先处理段落内的标题 # 标记
+        block = block.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+        block = block.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        block = block.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+        block = block.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+        // 如果转化后变成了标题标签，直接返回
+        if (block.match(/^<h[1-6]/)) return block;
+        // 单换行转为 <br>（让诗歌/短句也分行显示）
+        block = block.replace(/\n/g, '<br>');
+        return `<p>${block}</p>`;
+      }).filter(Boolean);
+      return rendered.join('\n');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function scrollToTop() {
+      document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showBackToTopButton() {
+      const btn = document.getElementById('backToTopBtn');
+      btn.style.display = 'block';
+    }
+
+    function hideBackToTopButton() {
+      const btn = document.getElementById('backToTopBtn');
+      btn.style.display = 'none';
+    }
+
+    // ========== 初始化 ==========
+    loadAnalysisHistory();
+    loadKnowledge();
+  </script>
+</body>
+</html>

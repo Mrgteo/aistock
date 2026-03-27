@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 - 股票交易辅助系统</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --error: #ef4444;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 420px;
+      padding: 48px 40px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header h1 {
+      font-size: 24px;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-primary:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: var(--error);
+      border: 1px solid #fecaca;
+      display: block;
+    }
+
+    .message.success {
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+      display: block;
+    }
+
+    .footer-links {
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    .footer-links a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .register-form {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <!-- 登录表单 -->
+    <form id="loginForm" class="login-form">
+      <div class="login-header">
+        <h1>股票交易辅助系统</h1>
+        <p>请登录以继续</p>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" placeholder="请输入密码" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="loginBtn">
+        登录
+      </button>
+
+      <div class="footer-links">
+        <a href="#" onclick="showRegister(); return false;">还没有账号？立即注册</a>
+      </div>
+    </form>
+
+    <!-- 注册表单 -->
+    <form id="registerForm" class="register-form">
+      <div class="login-header">
+        <h1>用户注册</h1>
+        <p>创建一个新账号</p>
+      </div>
+
+      <div id="regMessage" class="message"></div>
+
+      <div class="form-group">
+        <label for="regUsername">用户名</label>
+        <input type="text" id="regUsername" name="username" placeholder="请输入用户名 (3-50字符)" required>
+      </div>
+
+      <div class="form-group">
+        <label for="regEmail">邮箱</label>
+        <input type="email" id="regEmail" name="email" placeholder="请输入邮箱" required>
+      </div>
+
+      <div class="form-group">
+        <label for="regPassword">密码</label>
+        <input type="password" id="regPassword" name="password" placeholder="请输入密码 (至少6字符)" required>
+      </div>
+
+      <div class="form-group">
+        <label for="regConfirmPassword">确认密码</label>
+        <input type="password" id="regConfirmPassword" name="confirmPassword" placeholder="请再次输入密码" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="registerBtn">
+        注册
+      </button>
+
+      <div class="footer-links">
+        <a href="#" onclick="showLogin(); return false;">已有账号？立即登录</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017/api/auth';
+
+    // 显示登录表单
+    function showLogin() {
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('registerForm').style.display = 'none';
+      clearMessages();
+    }
+
+    // 显示注册表单
+    function showRegister() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+      clearMessages();
+    }
+
+    // 清除消息
+    function clearMessages() {
+      document.getElementById('message').style.display = 'none';
+      document.getElementById('regMessage').style.display = 'none';
+    }
+
+    // 显示消息
+    function showMessage(elementId, message, type) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = 'message ' + type;
+    }
+
+    // 保存token到localStorage
+    function saveAuth(data) {
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+
+    // 获取本地存储的用户信息
+    function getStoredUser() {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    }
+
+    // 检查是否已登录
+    function checkAuth() {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        // 跳转到主页
+        window.location.href = 'index.html';
+      }
+    }
+
+    // 登录表单提交
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showMessage('message', '请填写用户名和密码', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span>登录中...';
+
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showMessage('message', '登录成功！正在跳转...', 'success');
+          saveAuth(data.data);
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 500);
+        } else {
+          showMessage('message', data.detail || '登录失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '登录';
+        }
+      } catch (error) {
+        showMessage('message', '网络错误，请稍后重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    });
+
+    // 注册表单提交
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('registerBtn');
+      const username = document.getElementById('regUsername').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+      if (!username || !email || !password) {
+        showMessage('regMessage', '请填写所有字段', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('regMessage', '密码至少需要6个字符', 'error');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showMessage('regMessage', '两次输入的密码不一致', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span>注册中...';
+
+      try {
+        const response = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showMessage('regMessage', '注册成功！请登录', 'success');
+
+          setTimeout(() => {
+            showLogin();
+            document.getElementById('username').value = username;
+          }, 1000);
+        } else {
+          showMessage('regMessage', data.detail || '注册失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '注册';
+        }
+      } catch (error) {
+        showMessage('regMessage', '网络错误，请稍后重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '注册';
+      }
+    });
+
+    // 页面加载时检查是否已登录
+    checkAuth();
+  </script>
+</body>
+</html>

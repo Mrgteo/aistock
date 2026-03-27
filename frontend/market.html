@@ -1,0 +1,1387 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>市场行情</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      padding: 20px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 24px;
+    }
+
+    /* 标签页 */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      color: var(--text-main);
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 卡片样式 */
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title .left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .refresh-btn {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .card-title .refresh-btn:hover {
+      background: #e2e8f0;
+    }
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* 新闻列表 - 实时滚动样式 */
+    .news-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .news-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .news-panel {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .news-panel-header {
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .news-panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .news-panel-time {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .news-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .news-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .news-item:last-child {
+      border-bottom: none;
+    }
+    .news-item:hover {
+      background: #f8fafc;
+    }
+    .news-item.red {
+      background: #fef2f2;
+    }
+    .news-item.red:hover {
+      background: #fee2e2;
+    }
+    .news-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .news-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--warning);
+      color: white;
+    }
+    .news-tag.red {
+      background: var(--error);
+    }
+    .news-content {
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .news-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .news-subjects {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .news-subject {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      color: var(--text-muted);
+    }
+
+    /* 日期分隔 */
+    .date-divider {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    /* 加载更多 */
+    .load-more {
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .load-more:hover {
+      background: #f1f5f9;
+    }
+    .load-more.loading {
+      color: var(--text-muted);
+      cursor: wait;
+    }
+
+    /* 加载状态 */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .error-msg {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+    }
+
+    /* 子标签 */
+    .sub-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .sub-tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      background: #f1f5f9;
+      border-radius: 6px;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .sub-tab:hover {
+      background: #e2e8f0;
+    }
+    .sub-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* 指数网格 */
+    .index-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .index-card {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.2s;
+    }
+    .index-card:hover {
+      background: #f1f5f9;
+    }
+    .index-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .index-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .index-change {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .index-change.up {
+      color: var(--error);
+    }
+    .index-change.down {
+      color: var(--success);
+    }
+    .index-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .status-dot.open {
+      background: var(--success);
+    }
+    .status-dot.closed {
+      background: var(--text-muted);
+    }
+
+    /* K线图表容器 */
+    .kline-container {
+      display: none;
+      margin-top: 16px;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+    .kline-container.active {
+      display: block;
+    }
+    .kline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .kline-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .kline-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .kline-period-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #f8fafc;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .kline-period-btn:hover {
+      background: #e2e8f0;
+    }
+    .kline-period-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .kline-close {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 20px;
+      line-height: 1;
+      margin-left: 8px;
+    }
+    .kline-close:hover {
+      color: var(--text-main);
+    }
+    .kline-chart-wrapper {
+      position: relative;
+      height: 350px;
+    }
+    .kline-loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    /* 自动刷新指示器 */
+    .auto-refresh {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .refresh-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">市场行情</h1>
+
+  <!-- 主标签 -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('news', this)">市场快讯</div>
+    <div class="tab" onclick="switchTab('indices', this)">全球股指</div>
+  </div>
+
+  <!-- 市场快讯 -->
+  <div id="tab-news" class="tab-content active">
+    <div class="news-container">
+      <!-- 财联社电报 -->
+      <div class="news-panel">
+        <div class="news-panel-header">
+          <div class="left">
+            <span class="news-panel-title">财联社电报</span>
+            <span class="live-indicator">
+              <span class="live-dot"></span>
+              实时
+            </span>
+          </div>
+          <div class="news-panel-time" id="cls-time">--:--:--</div>
+        </div>
+        <div class="news-list" id="cls-news-list">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <!-- 同花顺财经 -->
+      <div class="news-panel">
+        <div class="news-panel-header">
+          <div class="left">
+            <span class="news-panel-title">同花顺财经</span>
+            <span class="live-indicator">
+              <span class="live-dot"></span>
+              实时
+            </span>
+          </div>
+          <div class="news-panel-time" id="ths-time">--:--:--</div>
+        </div>
+        <div class="news-list" id="ths-news-list">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全球股指 -->
+  <div id="tab-indices" class="tab-content">
+    <div class="sub-tabs">
+      <div class="sub-tab active" onclick="switchIndexRegion('common', this)">常用指数</div>
+      <div class="sub-tab" onclick="switchIndexRegion('cn', this)">A股指数</div>
+      <div class="sub-tab" onclick="switchIndexRegion('hk', this)">港股指数</div>
+      <div class="sub-tab" onclick="switchIndexRegion('us', this)">美股指数</div>
+      <div class="sub-tab" onclick="switchIndexRegion('europe', this)">欧洲指数</div>
+      <div class="sub-tab" onclick="switchIndexRegion('asia', this)">亚洲指数</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="left">
+          <span id="indices-title">常用指数</span>
+          <div class="auto-refresh" id="indices-refreshing" style="display: none;">
+            <div class="refresh-spinner"></div>
+            刷新中
+          </div>
+        </div>
+        <button class="refresh-btn" onclick="loadIndices()">刷新</button>
+      </div>
+      <div class="index-grid" id="indices-grid">
+        <div class="loading">加载中...</div>
+      </div>
+
+      <!-- K线图表容器 -->
+      <div class="kline-container" id="kline-container" onmouseenter="cancelHideKline()" onmouseleave="hideKline()">
+        <div class="kline-header">
+          <span class="kline-title" id="kline-title">加载中...</span>
+          <div class="kline-controls">
+            <button class="kline-period-btn active" data-period="daily" onclick="switchKlinePeriod('daily')">日K</button>
+            <button class="kline-period-btn" data-period="weekly" onclick="switchKlinePeriod('weekly')">周K</button>
+            <button class="kline-period-btn" data-period="monthly" onclick="switchKlinePeriod('monthly')">月K</button>
+            <span class="kline-close" onclick="closeKline()">&times;</span>
+          </div>
+        </div>
+        <div class="kline-chart-wrapper" id="kline-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017/api';
+
+    let currentIndexRegion = 'common';
+    let newsTimer = null;
+    let indicesTimer = null;
+    let klineChart = null;
+    let klineHoverTimer = null;
+    let currentKlineSymbol = null;
+    let currentKlineCode = null;
+    let currentKlineName = null;
+    let currentKlinePeriod = 'daily';
+    let klineHideTimer = null;
+
+    // 分页状态
+    const pagination = {
+      ths: { page: 1, loading: false, hasMore: true }
+    };
+
+    // 新闻数据
+    const newsData = {
+      cls: [],
+      ths: []
+    };
+
+    // 指数数据
+    const indicesData = {
+      common: [],
+      cn: [],
+      hk: [],
+      us: [],
+      europe: [],
+      asia: []
+    };
+
+    function switchTab(tabName, element) {
+      document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+
+      if (tabName === 'news') {
+        startNewsRefresh();
+      } else if (tabName === 'indices') {
+        loadIndices();
+        startIndicesRefresh();
+      }
+    }
+
+    function switchIndexRegion(region, element) {
+      currentIndexRegion = region;
+      document.querySelectorAll('#tab-indices .sub-tab').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+      document.getElementById('indices-title').textContent = {
+        'common': '常用指数',
+        'cn': 'A股指数',
+        'hk': '港股指数',
+        'us': '美股指数',
+        'europe': '欧洲指数',
+        'asia': '亚洲指数'
+      }[region] || '常用指数';
+      renderIndices();
+    }
+
+    // 渲染新闻列表
+    function renderNewsList(source, news, append = false) {
+      const listEl = document.getElementById(source + '-news-list');
+
+      if (!news || news.length === 0) {
+        if (!append) {
+          listEl.innerHTML = '<div class="error-msg">暂无数据</div>';
+        }
+        return;
+      }
+
+      let html = '';
+      let lastDate = '';
+
+      for (const item of news) {
+        // 添加日期分隔
+        if (item.date && item.date !== lastDate) {
+          lastDate = item.date;
+          html += `<div class="date-divider">${item.date}</div>`;
+        }
+
+        const isRed = item.is_red || (item.title && (item.title.includes('快讯') || item.title.includes('突发') || item.title.includes('紧急')));
+        const subjects = item.subjects || [];
+
+        html += `
+          <div class="news-item ${isRed ? 'red' : ''}" onclick="showNewsDetail('${item.url || ''}', '${item.title || item.content || ''}')">
+            <div class="news-time">
+              <span class="news-tag ${isRed ? 'red' : ''}">${item.time}</span>
+              ${isRed ? '<span class="news-tag red">重要</span>' : ''}
+            </div>
+            <div class="news-content">
+              ${item.title ? `<div class="news-title">${escapeHtml(item.title)}</div>` : ''}
+              <div>${escapeHtml(item.content || item.title || '')}</div>
+            </div>
+            ${subjects.length > 0 ? `
+              <div class="news-subjects">
+                ${subjects.slice(0, 3).map(s => `<span class="news-subject">${escapeHtml(s)}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 同花顺支持加载更多
+      if (source === 'ths' && pagination.ths.hasMore) {
+        html += `
+          <div class="load-more ${pagination.ths.loading ? 'loading' : ''}" id="ths-load-more" onclick="loadMoreNews()">
+            ${pagination.ths.loading ? '加载中...' : '加载更多'}
+          </div>
+        `;
+      }
+
+      if (append) {
+        const oldLoadMore = document.getElementById('ths-load-more');
+        if (oldLoadMore) oldLoadMore.remove();
+        listEl.insertAdjacentHTML('beforeend', html);
+      } else {
+        listEl.innerHTML = html;
+      }
+
+      // 绑定同花顺滚动加载
+      if (source === 'ths') {
+        listEl.onscroll = function() {
+          const { scrollTop, scrollHeight, clientHeight } = this;
+          if (scrollHeight - scrollTop - clientHeight < 100 && !pagination.ths.loading && pagination.ths.hasMore) {
+            loadMoreNews();
+          }
+        };
+      }
+    }
+
+    function loadMoreNews() {
+      if (pagination.ths.loading || !pagination.ths.hasMore) return;
+
+      pagination.ths.loading = true;
+      const loadMoreBtn = document.getElementById('ths-load-more');
+      if (loadMoreBtn) {
+        loadMoreBtn.className = 'load-more loading';
+        loadMoreBtn.textContent = '加载中...';
+      }
+
+      // 使用 page 分页
+      const nextPage = pagination.ths.page + 1;
+      fetch(`${API_BASE}/market/telegraph/more?source=ths&page=${nextPage}`)
+        .then(res => res.json())
+        .then(data => {
+          const news = data.news || [];
+          pagination.ths.hasMore = data.has_more !== false;
+          pagination.ths.page = data.current_page || nextPage;
+          pagination.ths.loading = false;
+
+          if (news.length > 0) {
+            newsData.ths = [...newsData.ths, ...news];
+            renderNewsList('ths', news, true);
+          }
+          updateTime('ths-time');
+        })
+        .catch(e => {
+          console.log('Load more error:', e);
+          pagination.ths.loading = false;
+          if (loadMoreBtn) {
+            loadMoreBtn.textContent = '加载失败，点击重试';
+            loadMoreBtn.className = 'load-more';
+          }
+        });
+    }
+
+    // 加载新闻
+    async function loadNews(source) {
+      try {
+        // 同花顺重置为第一页
+        if (source === 'ths') {
+          pagination.ths.page = 1;
+        }
+
+        const response = await fetch(`${API_BASE}/market/telegraph?source=${source}&page=${source === 'ths' ? 1 : 1}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          const news = data.news || [];
+
+          if (source === 'ths') {
+            pagination.ths.hasMore = data.has_more !== false;
+            pagination.ths.page = data.current_page || 1;
+            newsData.ths = news;
+          } else {
+            newsData.cls = news;
+          }
+
+          renderNewsList(source, news);
+          updateTime(source + '-time');
+        } else {
+          throw new Error('API error');
+        }
+      } catch (e) {
+        console.log('News API error:', e);
+        showMockNews(source);
+      }
+    }
+
+    // 显示新闻详情
+    function showNewsDetail(url, title) {
+      if (url && url.startsWith('http')) {
+        window.open(url, '_blank');
+      }
+    }
+
+    // HTML转义
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 显示模拟数据
+    function showMockNews(source) {
+      const listEl = document.getElementById(source + '-news-list');
+      const mockData = source === 'cls' ? [
+        { title: 'A股三大指数集体收涨，沪指重回3400点', content: '今日A股市场表现强劲，三大指数集体收涨。', time: '10:30:00', date: '2026-03-22', timestamp: 0, is_red: true, subjects: ['A股', '沪指'] },
+        { title: '央行开展500亿元逆回购操作', content: '为维护银行体系流动性合理充裕，央行今日开展逆回购操作。', time: '09:45:00', date: '2026-03-22', timestamp: 0, is_red: false, subjects: ['央行', '逆回购'] },
+        { title: '沪深两市成交额突破1.2万亿元', content: '市场交投活跃，沪深两市成交额持续放大。', time: '11:15:00', date: '2026-03-22', timestamp: 0, is_red: true, subjects: ['成交量'] },
+      ] : [
+        { title: '上证指数开盘上涨0.5%', content: '权重股表现强势，带动指数上行。', time: '09:35:00', date: '2026-03-22', timestamp: 0, is_red: true, subjects: ['上证指数'] },
+        { title: '北向资金净流入超50亿元', content: '外资持续买入A股市场。', time: '10:00:00', date: '2026-03-22', timestamp: 0, is_red: false, subjects: ['北向资金'] },
+        { title: '新能源板块持续活跃', content: '锂电概念领涨板块。', time: '10:45:00', date: '2026-03-22', timestamp: 0, is_red: true, subjects: ['新能源', '锂电'] },
+      ];
+
+      if (source === 'ths') {
+        pagination.ths.hasMore = false;
+      }
+      newsData[source] = mockData;
+      renderNewsList(source, mockData);
+      updateTime(source + '-time');
+    }
+
+    // 更新时间显示
+    function updateTime(elementId) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+      document.getElementById(elementId).textContent = timeStr;
+    }
+
+    // 转换指数代码为K线API需要的格式
+    function convertIndexCode(code) {
+      // A股指数: sh000001 -> 000001.SS, sz399001 -> 399001.SZ
+      if (code.startsWith('sh')) {
+        return code.replace('sh', '') + '.SS';
+      }
+      if (code.startsWith('sz')) {
+        return code.replace('sz', '') + '.SZ';
+      }
+      // 港股指数: hkHSI -> hkHSI (腾讯格式)
+      if (code.startsWith('hk')) {
+        return code.toLowerCase();  // 保持小写格式
+      }
+      // 美股指数: usDJI -> usDJI, usIXIC -> usIXIC, usINX -> usINX
+      if (code.startsWith('us')) {
+        return code.toLowerCase();
+      }
+      // 欧洲指数: ukUKX -> ukUKX, ftDAX30 -> ftDAX30, gzFCHI -> gzfchi
+      if (code.startsWith('uk') || code.startsWith('ft') || code.startsWith('gz')) {
+        return code.toLowerCase();
+      }
+      // 直接返回
+      return code;
+    }
+
+    // 显示K线图
+    function showKline(code, name) {
+      // 取消任何待执行的隐藏操作
+      if (klineHideTimer) {
+        clearTimeout(klineHideTimer);
+        klineHideTimer = null;
+      }
+
+      const apiCode = convertIndexCode(code);
+      if (apiCode === null) {
+        showKlineUnavailable(name);
+        return;
+      }
+
+      // 如果已经显示同一个指数的K线，什么都不做
+      if (currentKlineSymbol === apiCode && klineChart) {
+        const container = document.getElementById('kline-container');
+        container.classList.add('active');
+        return;
+      }
+
+      // 切换到新的指数，销毁旧图表
+      if (klineChart) {
+        klineChart.dispose();
+        klineChart = null;
+      }
+
+      currentKlineCode = code;
+      currentKlineSymbol = apiCode;
+      currentKlineName = name;
+      fetchKlineAndRender(apiCode, name, currentKlinePeriod);
+    }
+
+    // 取消隐藏K线（鼠标进入K线区域时调用）
+    function cancelHideKline() {
+      if (klineHideTimer) {
+        clearTimeout(klineHideTimer);
+        klineHideTimer = null;
+      }
+    }
+
+    // 准备隐藏K线（鼠标离开K线区域时调用，设置延迟）
+    function scheduleHideKline() {
+      // 延迟关闭，以便鼠标可以移动到图表上
+      if (klineHideTimer) {
+        clearTimeout(klineHideTimer);
+      }
+      klineHideTimer = setTimeout(() => {
+        closeKline();
+      }, 500);
+    }
+
+    // 立即隐藏K线（不使用延迟，用于明确隐藏）
+    function hideKline() {
+      scheduleHideKline();
+    }
+
+    // 切换K线周期
+    function switchKlinePeriod(period) {
+      if (!currentKlineSymbol || !currentKlineName) return;
+
+      currentKlinePeriod = period;
+
+      // 更新按钮状态
+      document.querySelectorAll('.kline-period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+
+      // 重新获取数据
+      fetchKlineAndRender(currentKlineSymbol, currentKlineName, period);
+    }
+
+    // 关闭K线图
+    function closeKline() {
+      // 取消待执行的隐藏操作
+      if (klineHideTimer) {
+        clearTimeout(klineHideTimer);
+        klineHideTimer = null;
+      }
+
+      const container = document.getElementById('kline-container');
+      container.classList.remove('active');
+      currentKlineSymbol = null;
+      currentKlineCode = null;
+      currentKlineName = null;
+
+      if (klineChart) {
+        klineChart.dispose();
+        klineChart = null;
+      }
+    }
+
+    // 显示K线不支持
+    function showKlineUnavailable(name) {
+      const container = document.getElementById('kline-container');
+      const title = document.getElementById('kline-title');
+      const wrapper = document.querySelector('.kline-chart-wrapper');
+
+      title.textContent = name;
+      wrapper.innerHTML = '<div class="kline-loading">该指数暂不支持K线查看（来源限制）</div>';
+      container.classList.add('active');
+    }
+
+    // 获取K线数据并渲染
+    async function fetchKlineAndRender(code, name, period = 'daily') {
+      const container = document.getElementById('kline-container');
+      const title = document.getElementById('kline-title');
+      const wrapper = document.getElementById('kline-chart');
+
+      // 检查请求的指数是否还是当前选中的
+      if (currentKlineSymbol !== code) {
+        return; // 已经切换到其他指数，忽略这次响应
+      }
+
+      title.textContent = name + ' K线走势';
+      wrapper.innerHTML = '<div class="kline-loading">加载中...</div>';
+      container.classList.add('active');
+
+      try {
+        // period: daily=日K, weekly=周K, monthly=月K
+        const days = period === 'daily' ? 60 : (period === 'weekly' ? 52 : 24);
+        const response = await fetch(`${API_BASE}/stock/kline?symbol=${encodeURIComponent(code)}&days=${days}&period=${period}`);
+        if (!response.ok) throw new Error('API error');
+
+        const data = await response.json();
+        const klines = data.klines || [];
+
+        // 再次检查，防止在等待响应期间切换了指数
+        if (currentKlineSymbol !== code) {
+          return;
+        }
+
+        if (klines.length === 0) {
+          wrapper.innerHTML = '<div class="kline-loading">暂无K线数据</div>';
+          return;
+        }
+
+        renderKlineChart(klines, name);
+      } catch (e) {
+        console.log('Kline fetch error:', e);
+        wrapper.innerHTML = '<div class="kline-loading">K线数据加载失败</div>';
+      }
+    }
+
+    // 渲染K线图表（ECharts蜡烛图）
+    // 参考go-stock K线图表实现 - 颜色和样式配置
+    const upColor = '#ec0000';      // 上涨颜色（红色）- go-stock风格
+    const downColor = '#00da3c';   // 下跌颜色（绿色）- go-stock风格
+
+    function renderKlineChart(klines, name) {
+      const wrapper = document.getElementById('kline-chart');
+      wrapper.innerHTML = '';
+
+      // 验证数据
+      if (!klines || klines.length === 0) {
+        wrapper.innerHTML = '<div class="kline-loading">暂无数据</div>';
+        return;
+      }
+
+      // 准备数据
+      // kline格式: { date, open, high, low, close, volume }
+      const dates = klines.map(k => k.date);
+      // ECharts candlestick格式: [open, close, low, high]
+      const values = klines.map(k => {
+        const o = parseFloat(k.open);
+        const c = parseFloat(k.close);
+        const l = parseFloat(k.low);
+        const h = parseFloat(k.high);
+        return [o || 0, c || 0, l || 0, h || 0];
+      });
+
+      // 计算成交量数据 - go-stock格式: [index, volume/10000, flag]
+      // flag: 与前一日收盘价比较，1=涨，-1=跌
+      const volumns = [];
+      for (let i = 0; i < klines.length; i++) {
+        const close = parseFloat(klines[i].close) || 0;
+        const prevClose = i > 0 ? (parseFloat(klines[i-1].close) || 0) : close;
+        let flag = close > prevClose ? 1 : -1;
+        const vol = parseInt(klines[i].volume) || 0;
+        volumns.push([i, vol / 10000, flag]);  // 成交量转换为万手
+      }
+
+      const closes = values.map(v => v[1]);  // 收盘价数组
+
+      // 销毁旧图表
+      if (klineChart) {
+        klineChart.dispose();
+      }
+
+      // 初始化ECharts
+      klineChart = echarts.init(wrapper);
+
+      // 获取最新一根K线数据用于标题
+      const lastClose = parseFloat(klines[klines.length - 1].close) || 0;
+      const prevClose = parseFloat(klines[klines.length - 2]?.close) || lastClose;
+      const lastChange = prevClose > 0 ? ((lastClose - prevClose) / prevClose * 100).toFixed(2) : '0.00';
+      const isUp = lastClose >= prevClose;
+      const titleColor = isUp ? upColor : downColor;
+
+      // 配置选项 - 参考go-stock KLineChart.vue
+      const option = {
+        animation: false,
+        title: {
+          text: `${name}  ${dates[values.length - 1]}  ${lastClose.toFixed(2)}  ${isUp ? '+' : ''}${lastChange}%`,
+          left: '0px',
+          textStyle: {
+            color: titleColor,
+            fontSize: 14
+          }
+        },
+        legend: {
+          right: 20,
+          top: 0,
+          data: ['日K', 'MA5', 'MA10', 'MA20', 'MA30'],
+          textStyle: {
+            color: '#456'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            lineStyle: {
+              color: '#376df4',
+              width: 2,
+              opacity: 1
+            }
+          },
+          borderWidth: 2,
+          borderColor: '#ccc',
+          backgroundColor: '#fff',
+          padding: 10,
+          textStyle: {
+            color: '#456'
+          },
+          formatter: function(params) {
+            // 找到各系列数据
+            const candi = params.find(p => p.seriesIndex === 0);
+            const ma5Item = params.find(p => p.seriesIndex === 1);
+            const ma10Item = params.find(p => p.seriesIndex === 2);
+            const ma20Item = params.find(p => p.seriesIndex === 3);
+            const ma30Item = params.find(p => p.seriesIndex === 4);
+            const volumItem = params.find(p => p.seriesIndex === 5);
+
+            if (!candi || !candi.data) return '';
+
+            const currentData = candi.data;
+            const date = candi.axisValue || '';
+            // ECharts candlestick数据格式: [open, close, low, high] - 使用正确的索引
+            const open = currentData[0] || 0;
+            const close = currentData[1] || 0;
+            const low = currentData[2] || 0;
+            const high = currentData[3] || 0;
+            const volum = volumItem ? (volumItem.data ? volumItem.data[1] : 0) : 0;
+
+            const ma5Val = ma5Item && ma5Item.data ? ma5Item.data : '-';
+            const ma10Val = ma10Item && ma10Item.data ? ma10Item.data : '-';
+            const ma20Val = ma20Item && ma20Item.data ? ma20Item.data : '-';
+            const ma30Val = ma30Item && ma30Item.data ? ma30Item.data : '-';
+
+            return date + '<br>' +
+                '开盘:' + open.toFixed(2) + '<br>' +
+                '收盘:' + close.toFixed(2) + '<br>' +
+                '最低:' + low.toFixed(2) + '<br>' +
+                '最高:' + high.toFixed(2) + '<br>' +
+                '成交量(万手):' + (volum ? volum.toFixed(2) : '0') + '<br>' +
+                'MA5日均线:' + (typeof ma5Val === 'number' ? ma5Val.toFixed(2) : ma5Val) + '<br>' +
+                'MA10日均线:' + (typeof ma10Val === 'number' ? ma10Val.toFixed(2) : ma10Val) + '<br>' +
+                'MA20日均线:' + (typeof ma20Val === 'number' ? ma20Val.toFixed(2) : ma20Val) + '<br>' +
+                'MA30日均线:' + (typeof ma30Val === 'number' ? ma30Val.toFixed(2) : ma30Val);
+          }
+        },
+        axisPointer: {
+          link: [{ xAxisIndex: 'all' }],
+          label: { backgroundColor: '#888' }
+        },
+        visualMap: {
+          show: false,
+          seriesIndex: 5,
+          dimension: 2,
+          pieces: [
+            { value: -1, color: downColor },
+            { value: 1, color: upColor }
+          ]
+        },
+        grid: [
+          { left: '8%', right: '8%', height: '50%' },
+          { left: '8%', right: '8%', top: '66%', height: '18%' }
+        ],
+        xAxis: [
+          {
+            type: 'category',
+            data: dates,
+            boundaryGap: false,
+            axisLine: { onZero: false },
+            splitLine: { show: false },
+            min: 'dataMin',
+            max: 'dataMax',
+            axisPointer: { z: 100 }
+          },
+          {
+            type: 'category',
+            gridIndex: 1,
+            data: dates,
+            boundaryGap: false,
+            axisLine: { onZero: false },
+            axisTick: { show: false },
+            splitLine: { show: false },
+            axisLabel: { show: false },
+            min: 'dataMin',
+            max: 'dataMax'
+          }
+        ],
+        yAxis: [
+          {
+            scale: true,
+            splitArea: { show: true },
+            axisLabel: { show: true },
+            axisLine: { show: true },
+            axisTick: { show: true },
+            splitLine: { show: false }
+          },
+          {
+            scale: true,
+            gridIndex: 1,
+            splitNumber: 2,
+            axisLabel: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { show: false }
+          }
+        ],
+        dataZoom: [
+          { type: 'inside', xAxisIndex: [0, 1], start: 85, end: 100 },
+          { show: true, xAxisIndex: [0, 1], type: 'slider', top: '85%', start: 85, end: 100 }
+        ],
+        series: [
+          {
+            name: '日K',
+            type: 'candlestick',
+            data: values,
+            itemStyle: {
+              color: upColor,
+              color0: downColor
+            },
+            markPoint: {
+              label: {
+                formatter: function(param) {
+                  return param != null ? param.value + '' : '';
+                }
+              },
+              data: [
+                { name: '最高', type: 'max', valueDim: 'highest' },
+                { name: '最低', type: 'min', valueDim: 'lowest' },
+                { name: '平均收盘价', type: 'average', valueDim: 'close' }
+              ],
+              tooltip: {
+                formatter: function(param) {
+                  return param.name + '<br>' + (param.data.coord || '');
+                }
+              }
+            },
+            markLine: {
+              symbol: ['none', 'none'],
+              data: [
+                [
+                  {
+                    name: 'from lowest to highest',
+                    type: 'min',
+                    valueDim: 'lowest',
+                    symbol: 'circle',
+                    symbolSize: 10,
+                    label: { show: false },
+                    emphasis: { label: { show: false } }
+                  },
+                  {
+                    type: 'max',
+                    valueDim: 'highest',
+                    symbol: 'circle',
+                    symbolSize: 10,
+                    label: { show: false },
+                    emphasis: { label: { show: false } }
+                  }
+                ],
+                { name: 'min line on close', type: 'min', valueDim: 'close' },
+                { name: 'max line on close', type: 'max', valueDim: 'close' }
+              ]
+            }
+          },
+          {
+            name: 'MA5',
+            type: 'line',
+            data: calculateMA(5, values),
+            smooth: true,
+            showSymbol: false,
+            lineStyle: { opacity: 0.6 }
+          },
+          {
+            name: 'MA10',
+            type: 'line',
+            data: calculateMA(10, values),
+            smooth: true,
+            showSymbol: false,
+            lineStyle: { opacity: 0.6 }
+          },
+          {
+            name: 'MA20',
+            type: 'line',
+            data: calculateMA(20, values),
+            smooth: true,
+            showSymbol: false,
+            lineStyle: { opacity: 0.6 }
+          },
+          {
+            name: 'MA30',
+            type: 'line',
+            data: calculateMA(30, values),
+            smooth: true,
+            showSymbol: false,
+            lineStyle: { opacity: 0.6 }
+          },
+          {
+            name: '成交量(手)',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            itemStyle: { color: '#7fbe9e' },
+            data: volumns
+          }
+        ]
+      };
+
+      klineChart.setOption(option, true);
+
+      // 响应窗口大小变化
+      window.addEventListener('resize', () => {
+        if (klineChart) {
+          klineChart.resize();
+        }
+      });
+    }
+
+    // go-stock风格的均线计算函数 - 基于收盘价计算
+    function calculateMA(dayCount, values) {
+      var result = [];
+      for (var i = 0, len = values.length; i < len; i++) {
+        if (i < dayCount) {
+          result.push('-');
+          continue;
+        }
+        var sum = 0;
+        for (var j = 0; j < dayCount; j++) {
+          sum += +values[i - j][1];  // index [1] 是收盘价
+        }
+        result.push((sum / dayCount).toFixed(2));
+      }
+      return result;
+    }
+
+    // 加载全球股指
+    async function loadIndices() {
+      const grid = document.getElementById('indices-grid');
+      grid.innerHTML = '<div class="loading">加载中...</div>';
+
+      document.getElementById('indices-refreshing').style.display = 'flex';
+
+      try {
+        const response = await fetch(`${API_BASE}/market/global_indices`);
+        if (response.ok) {
+          const data = await response.json();
+          indicesData.common = data.common || [];
+          indicesData.cn = data.cn || [];
+          indicesData.hk = data.hk || [];
+          indicesData.us = data.us || [];
+          indicesData.europe = data.europe || [];
+          indicesData.asia = data.asia || [];
+          renderIndices();
+        } else {
+          showMockIndices();
+        }
+      } catch (e) {
+        console.log('Indices API error:', e);
+        showMockIndices();
+      }
+
+      document.getElementById('indices-refreshing').style.display = 'none';
+    }
+
+    // 渲染股指列表
+    function renderIndices() {
+      const grid = document.getElementById('indices-grid');
+      const indices = indicesData[currentIndexRegion] || [];
+
+      if (indices.length === 0) {
+        grid.innerHTML = '<div class="error-msg">暂无数据</div>';
+        return;
+      }
+
+      grid.innerHTML = indices.map(index => {
+        const change = parseFloat(index.change) || 0;
+        const isUp = change >= 0;
+        const state = index.state || 'closed';
+        const openPrice = index.open && index.open !== '--' ? index.open : '-';
+        const priceDisplay = index.price || '--';
+
+        return `
+          <div class="index-card" data-code="${index.code}" data-name="${index.name}" onmouseenter="showKline('${index.code}', '${index.name}')" onmouseleave="hideKline()">
+            <div class="index-name">${index.name}</div>
+            <div class="index-value">${priceDisplay}</div>
+            <div class="index-change ${isUp ? 'up' : 'down'}">
+              ${isUp ? '+' : ''}${change.toFixed(2)}%
+            </div>
+            <div class="index-info" style="font-size:12px;color:#64748b;margin-top:4px;">
+                          </div>
+            <div class="index-status">
+              <span class="status-dot ${state}"></span>
+              ${state === 'open' ? '开市中' : '已休市'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 显示模拟股指数据
+    function showMockIndices() {
+      indicesData.common = [
+        { name: '上证指数', code: 'sh000001', price: '3400.00', change: 0.85, state: 'open' },
+        { name: '深证成指', code: 'sz399001', price: '11200.00', change: 1.25, state: 'open' },
+        { name: '创业板指', code: 'sz399006', price: '2200.00', change: -0.45, state: 'open' },
+        { name: '沪深300', code: 'sh000300', price: '4100.00', change: 0.62, state: 'open' },
+        { name: '上证50', code: 'sh000016', price: '2400.00', change: 0.38, state: 'open' },
+      ];
+      indicesData.cn = [
+        { name: '上证指数', code: 'sh000001', price: '3400.00', change: 0.85, state: 'open' },
+        { name: '深证成指', code: 'sz399001', price: '11200.00', change: 1.25, state: 'open' },
+        { name: '创业板指', code: 'sz399006', price: '2200.00', change: -0.45, state: 'open' },
+        { name: '科创50', code: 'sh000688', price: '1000.00', change: 1.52, state: 'open' },
+        { name: '中证500', code: 'sh000905', price: '5800.00', change: 0.78, state: 'open' },
+      ];
+      indicesData.hk = [
+        { name: '恒生指数', code: 'hkHSI', price: '18000.00', change: -0.32, state: 'closed' },
+        { name: '恒生科技', code: 'hkHSTECH', price: '3800.00', change: -1.25, state: 'closed' },
+        { name: '国企指数', code: 'hkHSCE', price: '6200.00', change: -0.58, state: 'closed' },
+      ];
+      indicesData.us = [
+        { name: '道琼斯', code: 'us.DJI', price: '39000.00', change: 0.45, state: 'closed' },
+        { name: '纳斯达克', code: 'us.IXIC', price: '16000.00', change: 0.82, state: 'closed' },
+        { name: '标普500', code: 'us.INX', price: '5200.00', change: 0.56, state: 'closed' },
+      ];
+      renderIndices();
+    }
+
+    // 开始新闻自动刷新
+    function startNewsRefresh() {
+      loadNews('cls');
+      loadNews('ths');
+
+      if (newsTimer) clearInterval(newsTimer);
+      newsTimer = setInterval(() => {
+        loadNews('cls');
+        loadNews('ths');
+      }, 30000);
+    }
+
+    // 开始股指自动刷新
+    function startIndicesRefresh() {
+      if (indicesTimer) clearInterval(indicesTimer);
+      indicesTimer = setInterval(() => {
+        loadIndices();
+      }, 30000);
+    }
+
+    // 页面加载时检查登录
+    function checkAuth() {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+      startNewsRefresh();
+    }
+
+    // 清理定时器
+    function cleanup() {
+      if (newsTimer) clearInterval(newsTimer);
+      if (indicesTimer) clearInterval(indicesTimer);
+    }
+
+    window.addEventListener('beforeunload', cleanup);
+
+    // 初始化
+    checkAuth();
+  </script>
+</body>
+</html>

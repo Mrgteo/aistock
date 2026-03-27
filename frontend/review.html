@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>交易复盘日志</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+      background-color: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+    }
+
+    /* 左侧日历 */
+    .sidebar {
+      width: 340px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .calendar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .calendar-header button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .month-label {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .month-label:hover {
+      background: #f1f5f9;
+    }
+    .calendar-grid {
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+    .day-name {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+    .day-cell:hover:not(.empty) {
+      background: #f1f5f9;
+    }
+    .day-cell.active {
+      background: var(--primary);
+      color: white;
+      font-weight: bold;
+    }
+    .day-cell.today {
+      border: 2px solid var(--primary);
+    }
+    .day-cell.empty {
+      cursor: default;
+    }
+
+    /* 右侧编辑区 */
+    .main-content {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .editor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      flex: 1;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 120px;
+      background: #f8fafc;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    .image-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .image-upload-area:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .gallery-item {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+    .gallery-item img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .gallery-item .img-delete {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-item .img-delete:hover {
+      background: #dc2626;
+    }
+    
+    .btn-save {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save:hover { background: var(--primary-hover); }
+
+    /* 交易明细模块 */
+    .trades-section {
+      margin-top: 30px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+    .trade-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .trade-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .trade-input {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .trade-input label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin: 0;
+    }
+    .trade-input input, .trade-input select {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .trade-full {
+      grid-column: 1 / -1;
+    }
+    .trade-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+    }
+    .btn-ai {
+      background: #8b5cf6;
+      color: white;
+      border: none;
+    }
+    .ai-review-result {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fdf4ff;
+      border: 1px solid #f3e8ff;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #4c1d95;
+      white-space: pre-wrap;
+      display: none;
+    }
+
+    /* Toast 提示 */
+    #toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #1e293b;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #toast.error {
+      background: #ef4444;
+    }
+    #toast.success {
+      background: #10b981;
+    }
+
+    /* 日期已加载标识 */
+    .loaded-badge {
+      font-size: 11px;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+
+    /* 页面头部（标题+保存按钮） */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .page-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">&lt;</button>
+      <strong id="currentMonthLabel" class="month-label" onclick="showYearMonthPicker()">2023年10月</strong>
+      <button onclick="changeMonth(1)">&gt;</button>
+    </div>
+    <div id="yearMonthPicker" style="display:none; padding: 12px 20px; border-bottom: 1px solid var(--border); background: #f8fafc;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select id="pickerYear" style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:13px;"></select>
+        <span style="color:var(--text-muted); font-size:13px;">年</span>
+        <select id="pickerMonth" style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:13px;"></select>
+        <span style="color:var(--text-muted); font-size:13px;">月</span>
+        <button onclick="confirmYearMonth()" style="padding:4px 12px; background:var(--primary); color:#fff; border:none; border-radius:4px; font-size:13px; cursor:pointer;">确定</button>
+        <button onclick="hideYearMonthPicker()" style="padding:4px 12px; background:#e2e8f0; color:var(--text-main); border:none; border-radius:4px; font-size:13px; cursor:pointer;">取消</button>
+      </div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid">
+      <!-- 注入日历格子 -->
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- 页面头部：标题 + 保存按钮 -->
+    <div class="page-header">
+      <div class="page-header-left">
+        <h2 id="editorDateLabel">选择日期进行复盘</h2>
+      </div>
+      <button class="btn-save" onclick="saveData()">💾 保存记录</button>
+    </div>
+
+    <div class="editor-card">
+      <div class="form-group">
+        <label>💡 交易心得与总结</label>
+        <textarea id="reflections" placeholder="记录今天的交易逻辑、情绪控制、得失教训..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>🎯 次日交易计划</label>
+        <textarea id="plans" placeholder="写下明天的关注标的、入场点位、止损位..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>📸 交易记录截图</label>
+        <div class="image-upload-area" onclick="document.getElementById('fileInput').click()">
+          点击上传截图 (支持交割单、K线图等)
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="uploadImage(event)">
+        <div class="gallery" id="imageGallery"></div>
+      </div>
+
+      <div class="trades-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0;">📝 结构化交易记录</h3>
+          <button class="btn-sm" onclick="addTrade()">+ 添加交易记录</button>
+        </div>
+        <div id="tradesContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017';
+    let currentDate = new Date();
+    let selectedDateStr = "";
+    let uploadedImages = [];
+    let tradesData = [];
+
+    // Toast 提示
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = type + ' show';
+      setTimeout(() => { toast.className = ''; }, 2500);
+    }
+
+    // 自动保存（AI复盘生成后自动触发，不弹提示）
+    async function autoSave() {
+      if (!selectedDateStr) return;
+      syncTradesData();
+      const data = {
+        reflections: txtReflections.value,
+        plans: txtPlans.value,
+        images: uploadedImages,
+        trades: tradesData
+      };
+      try {
+        await fetch(`${API_BASE}/api/review/${selectedDateStr}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+      } catch (e) {
+        console.error('autoSave failed:', e);
+      }
+    }
+
+    // 清理 markdown 格式符号，保留结构化内容
+    function cleanMarkdown(text) {
+      if (!text) return '';
+      // 移除 ### ## # 标题标记（保留文字）
+      text = text.replace(/^#{1,6}\s+(.+)$/gm, '$1');
+      // 移除 ** 粗体标记
+      text = text.replace(/\*\*/g, '');
+      // 移除 * 斜体标记
+      text = text.replace(/(?<!\*)\*([^*]+?)(?!\*)/g, '$1');
+      // 移除 ` 行内代码
+      text = text.replace(/`/g, '');
+      // 移除 --- 等分隔线
+      text = text.replace(/^[-*_]{3,}$/gm, '');
+      // 移除 > 引用标记
+      text = text.replace(/^>\s*/gm, '');
+      // 移除 - + * 列表标记（保留内容）
+      text = text.replace(/^[-*+]\s+/gm, '• ');
+      // 移除数字列表标记（保留内容）
+      text = text.replace(/^\d+\.\s+/gm, '');
+      // 将多个连续换行合并为两个
+      text = text.replace(/\n{3,}/g, '\n\n');
+      return text.trim();
+    }
+
+    const monthLabel = document.getElementById('currentMonthLabel');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const editorDateLabel = document.getElementById('editorDateLabel');
+    const txtReflections = document.getElementById('reflections');
+    const txtPlans = document.getElementById('plans');
+    const imageGallery = document.getElementById('imageGallery');
+    const tradesContainer = document.getElementById('tradesContainer');
+
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      monthLabel.textContent = `${year}年${month + 1}月`;
+      
+      calendarGrid.innerHTML = '';
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      days.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'day-name';
+        el.textContent = d;
+        calendarGrid.appendChild(el);
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      const todayStr = formatDate(new Date());
+
+      for (let i = 0; i < firstDay; i++) {
+        const el = document.createElement('div');
+        el.className = 'day-cell empty';
+        calendarGrid.appendChild(el);
+      }
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const el = document.createElement('div');
+        el.className = 'day-cell';
+        el.textContent = i;
+        
+        const cellDate = new Date(year, month, i);
+        const cellDateStr = formatDate(cellDate);
+        
+        if (cellDateStr === todayStr) el.classList.add('today');
+        if (cellDateStr === selectedDateStr) el.classList.add('active');
+
+        el.onclick = () => selectDate(cellDateStr);
+        calendarGrid.appendChild(el);
+      }
+    }
+
+    function changeMonth(delta) {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function showYearMonthPicker() {
+      const picker = document.getElementById('yearMonthPicker');
+      const yearSelect = document.getElementById('pickerYear');
+      const monthSelect = document.getElementById('pickerMonth');
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // 生成年份选项（当前年份前后5年）
+      yearSelect.innerHTML = '';
+      for (let y = year - 5; y <= year + 5; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y === year) opt.selected = true;
+        yearSelect.appendChild(opt);
+      }
+
+      // 生成月份选项
+      monthSelect.innerHTML = '';
+      for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = m - 1;
+        opt.textContent = m + '月';
+        if (m - 1 === month) opt.selected = true;
+        monthSelect.appendChild(opt);
+      }
+
+      picker.style.display = 'block';
+    }
+
+    function hideYearMonthPicker() {
+      document.getElementById('yearMonthPicker').style.display = 'none';
+    }
+
+    function confirmYearMonth() {
+      const year = parseInt(document.getElementById('pickerYear').value);
+      const month = parseInt(document.getElementById('pickerMonth').value);
+      currentDate.setFullYear(year);
+      currentDate.setMonth(month);
+      hideYearMonthPicker();
+      renderCalendar();
+    }
+
+    async function selectDate(dateStr) {
+      selectedDateStr = dateStr;
+      editorDateLabel.textContent = dateStr + ' 复盘日志';
+      renderCalendar(); // refresh active state
+
+      txtReflections.value = "加载中...";
+      txtPlans.value = "";
+      imageGallery.innerHTML = "";
+      uploadedImages = [];
+      tradesData = [];
+      renderTrades();
+
+      // 移除已加载标识
+      const existingBadge = editorDateLabel.parentElement.querySelector('.loaded-badge');
+      if (existingBadge) existingBadge.remove();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/review/${dateStr}`);
+        if(res.ok) {
+          const data = await res.json();
+          txtReflections.value = data.reflections || "";
+          txtPlans.value = data.plans || "";
+          uploadedImages = data.images || [];
+          tradesData = data.trades || [];
+          renderGallery();
+          renderTrades();
+
+          // 有数据时显示已加载标识
+          const hasData = (data.reflections || data.plans || (data.trades && data.trades.length > 0) || (data.images && data.images.length > 0));
+          if (hasData) {
+            const badge = document.createElement('span');
+            badge.className = 'loaded-badge';
+            badge.textContent = '已加载';
+            editorDateLabel.parentElement.appendChild(badge);
+          }
+        } else {
+          txtReflections.value = "";
+        }
+      } catch (e) {
+        txtReflections.value = "";
+      }
+    }
+
+    function syncTradesData() {
+      const items = document.querySelectorAll('.trade-item');
+      tradesData = Array.from(items).map(el => {
+        return {
+          id: el.dataset.id,
+          symbol: el.querySelector('.t-symbol').value,
+          direction: el.querySelector('.t-dir').value,
+          plan_entry: parseFloat(el.querySelector('.t-pe').value) || 0,
+          plan_sl: parseFloat(el.querySelector('.t-psl').value) || 0,
+          plan_tp: parseFloat(el.querySelector('.t-ptp').value) || 0,
+          actual_entry: parseFloat(el.querySelector('.t-ae').value) || 0,
+          actual_exit: parseFloat(el.querySelector('.t-ax').value) || 0,
+          reason: el.querySelector('.t-reason').value,
+          emotion: el.querySelector('.t-emotion').value,
+          ai_review: cleanMarkdown(el.querySelector('.ai-review-result').textContent)
+        };
+      });
+    }
+
+    async function saveData() {
+      if(!selectedDateStr) return alert('请先选择日期');
+      syncTradesData();
+
+      const btn = document.querySelector('.btn-save');
+      const originText = btn.textContent;
+      btn.textContent = '保存中...';
+      btn.disabled = true;
+
+      const data = {
+        reflections: txtReflections.value,
+        plans: txtPlans.value,
+        images: uploadedImages,
+        trades: tradesData
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/review/${selectedDateStr}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        if(res.ok) {
+          showToast('✅ 保存成功！');
+        } else {
+          showToast('❌ 保存失败，请重试', 'error');
+        }
+      } catch(e) {
+        console.error(e);
+        showToast('❌ 网络错误，请检查网络', 'error');
+      } finally {
+        btn.textContent = originText;
+        btn.disabled = false;
+      }
+    }
+
+    async function uploadImage(e) {
+      if(!selectedDateStr) return alert('请先选择日期');
+      const file = e.target.files[0];
+      if(!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/review/upload/${selectedDateStr}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if(res.ok && data.url) {
+          uploadedImages.push(data.url);
+          renderGallery();
+          // 上传成功后自动保存
+          await autoSave();
+        } else {
+          showToast('上传失败: ' + (data.detail || '未知错误'), 'error');
+        }
+      } catch(err) {
+        showToast('上传异常，请重试', 'error');
+      }
+      e.target.value = ''; // reset
+    }
+
+    function renderGallery() {
+      imageGallery.innerHTML = '';
+      uploadedImages.forEach((url, idx) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.innerHTML = `
+          <img src="${API_BASE}${url}" onclick="window.open('${API_BASE}${url}', '_blank')">
+          <button class="img-delete" onclick="deleteImage(${idx})">×</button>
+        `;
+        imageGallery.appendChild(item);
+      });
+    }
+
+    function deleteImage(idx) {
+      if(!confirm('确定删除该截图？')) return;
+      uploadedImages.splice(idx, 1);
+      renderGallery();
+    }
+
+    function addTrade() {
+      tradesData.push({
+        id: Date.now().toString(), symbol: "", direction: "long", plan_entry: 0, plan_sl: 0, plan_tp: 0, actual_entry: 0, actual_exit: 0, reason: "", emotion: "", ai_review: ""
+      });
+      renderTrades();
+    }
+
+    function deleteTrade(id) {
+      tradesData = tradesData.filter(t => t.id !== id);
+      renderTrades();
+    }
+
+    async function generateAIReview(btn, id) {
+      syncTradesData();
+      const trade = tradesData.find(t => t.id === id);
+      if(!trade || !trade.symbol) return alert("请先填写标的代码");
+
+      const originText = btn.textContent;
+      btn.textContent = "AI 分析中...";
+      btn.disabled = true;
+
+      try {
+        // 构建严格匹配后端 BaseModel 的数据结构
+        const payload = {
+          id: String(trade.id || "1"),
+          symbol: String(trade.symbol || "未知"),
+          direction: String(trade.direction || "long"),
+          plan_entry: parseFloat(trade.plan_entry) || 0,
+          plan_sl: parseFloat(trade.plan_sl) || 0,
+          plan_tp: parseFloat(trade.plan_tp) || 0,
+          actual_entry: parseFloat(trade.actual_entry) || 0,
+          actual_exit: parseFloat(trade.actual_exit) || 0,
+          reason: String(trade.reason || "无"),
+          emotion: String(trade.emotion || "无"),
+          ai_review: String(trade.ai_review || "")
+        };
+
+        const res = await fetch(`${API_BASE}/api/review/ai_analyze`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        const resBox = btn.parentElement.parentElement.querySelector('.ai-review-result');
+        resBox.style.display = 'block';
+        if(res.ok) {
+          trade.ai_review = `[计算] 盈亏: ${data.pnl.toFixed(2)}% | 偏离度: ${data.deviation.toFixed(2)}%\n\n${cleanMarkdown(data.reply)}`;
+          resBox.textContent = trade.ai_review;
+          resBox.style.color = '#4c1d95';
+          // AI 复盘生成后自动保存
+          await autoSave();
+        } else {
+          resBox.textContent = '❌ AI 分析失败: ' + (data.detail || '网络异常，请稍后重试');
+          resBox.style.color = '#dc2626';
+        }
+      } catch(e) {
+        const resBox = btn.parentElement.parentElement.querySelector('.ai-review-result');
+        resBox.style.display = 'block';
+        resBox.textContent = '❌ 网络错误: ' + e.message + '，请检查网络后重试';
+        resBox.style.color = '#dc2626';
+      } finally {
+        btn.textContent = originText;
+        btn.disabled = false;
+      }
+    }
+
+    function renderTrades() {
+      tradesContainer.innerHTML = '';
+      tradesData.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'trade-item';
+        div.dataset.id = t.id;
+        
+        div.innerHTML = `
+          <div class="trade-grid">
+            <div class="trade-input"><label>标的代码</label><input type="text" class="t-symbol" value="${t.symbol}"></div>
+            <div class="trade-input"><label>方向</label>
+              <select class="t-dir">
+                <option value="long" ${t.direction==='long'?'selected':''}>做多</option>
+                <option value="short" ${t.direction==='short'?'selected':''}>做空</option>
+              </select>
+            </div>
+            <div class="trade-input"><label>情绪状态</label><input type="text" class="t-emotion" value="${t.emotion}" placeholder="如：冲动、冷静"></div>
+            <div class="trade-input"><label>入场理由</label><input type="text" class="t-reason" value="${t.reason}"></div>
+            
+            <div class="trade-input"><label>计划入场价</label><input type="number" class="t-pe" value="${t.plan_entry}"></div>
+            <div class="trade-input"><label>计划止损价</label><input type="number" class="t-psl" value="${t.plan_sl}"></div>
+            <div class="trade-input"><label>计划目标价</label><input type="number" class="t-ptp" value="${t.plan_tp}"></div>
+            <div style="grid-column:span 1;"></div>
+            
+            <div class="trade-input"><label>实际入场价</label><input type="number" class="t-ae" value="${t.actual_entry}"></div>
+            <div class="trade-input"><label>实际出场价</label><input type="number" class="t-ax" value="${t.actual_exit}"></div>
+          </div>
+          
+          <div class="ai-review-result" style="display: ${t.ai_review ? 'block' : 'none'}">${t.ai_review}</div>
+          
+          <div class="trade-actions">
+            <button class="btn-sm btn-ai" onclick="generateAIReview(this, '${t.id}')">✨ AI 生成复盘报告</button>
+            <button class="btn-sm" style="color:#ef4444;" onclick="deleteTrade('${t.id}')">删除记录</button>
+          </div>
+        `;
+        tradesContainer.appendChild(div);
+      });
+    }
+
+    // 初始化选今天
+    selectDate(formatDate(new Date()));
+  </script>
+</body>
+</html>

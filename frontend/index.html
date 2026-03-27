@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>股票交易辅助系统</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --sidebar-width: 200px;
+    }
+
+    /* 深色主题 */
+    html.dark {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 侧边导航栏 */
+    .nav-sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      z-index: 20;
+    }
+    .nav-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-header h1 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--primary);
+    }
+    .nav-menu {
+      flex: 1;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-item {
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-item:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+    .nav-item.active {
+      background: #eff6ff;
+      color: var(--primary);
+    }
+
+    /* 用户信息区域 */
+    .user-section {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .user-details {
+      flex: 1;
+      min-width: 0;
+    }
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-role {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .logout-btn {
+      width: 100%;
+      padding: 10px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      color: #ef4444;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .logout-btn:hover {
+      background: #fee2e2;
+    }
+
+    /* 主内容区 iframe */
+    .content-area {
+      flex: 1;
+      height: 100%;
+      background: var(--bg);
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.2s ease;
+    }
+    iframe.active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-sidebar">
+    <div class="nav-header">
+      <h1>交易辅助系统</h1>
+    </div>
+    <div class="nav-menu">
+      <div class="nav-item" onclick="switchTab('market', this)">
+        <span>📈</span> 市场行情
+      </div>
+      <div class="nav-item" onclick="switchTab('analyze', this)">
+        <span>📊</span> 股票分析
+      </div>
+      <div class="nav-item" onclick="switchTab('shortlist', this)">
+        <span>🎯</span> 策略选股
+      </div>
+      <div class="nav-item" onclick="switchTab('review', this)">
+        <span>📝</span> 交易复盘
+      </div>
+      <div class="nav-item" onclick="switchTab('report', this)">
+        <span>📄</span> AI研报分析
+      </div>
+      <div class="nav-item" onclick="switchTab('settings', this)">
+        <span>⚙️</span> 设置
+      </div>
+    </div>
+
+    <!-- 用户信息区域 -->
+    <div class="user-section">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-details">
+          <div class="user-name" id="userName">用户</div>
+          <div class="user-role" id="userRole">普通用户</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+    </div>
+  </div>
+
+  <div class="content-area">
+    <iframe id="frame-market" src="market.html" class="active"></iframe>
+    <iframe id="frame-analyze" src="analyze.html"></iframe>
+    <iframe id="frame-shortlist" src="shortlist.html"></iframe>
+    <iframe id="frame-review" src="review.html"></iframe>
+    <iframe id="frame-report" src="report_analysis.html"></iframe>
+    <iframe id="frame-settings" src="settings.html"></iframe>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8017/api/auth';
+
+    function switchTab(tabId, element) {
+      // 切换导航按钮高亮
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+
+      // 切换 iframe 显示/隐藏
+      document.querySelectorAll('iframe').forEach(frame => frame.classList.remove('active'));
+      document.getElementById('frame-' + tabId).classList.add('active');
+    }
+
+    // 监听来自 iframe 的消息
+    window.addEventListener('message', function(event) {
+      if (event.data.type === 'sidebarWidth') {
+        document.documentElement.style.setProperty('--sidebar-width', event.data.width + 'px');
+        document.querySelector('.nav-sidebar').style.width = event.data.width + 'px';
+        document.querySelector('.nav-sidebar').style.minWidth = event.data.width + 'px';
+      }
+      if (event.data.type === 'setTheme') {
+        document.documentElement.classList.toggle('dark', event.data.theme === 'dark');
+      }
+    });
+
+    // 初始化时加载侧边栏宽度设置
+    (function initSidebarWidth() {
+      const settings = JSON.parse(localStorage.getItem('settings_appearance') || '{}');
+      if (settings.sidebarWidth) {
+        document.documentElement.style.setProperty('--sidebar-width', settings.sidebarWidth + 'px');
+        document.querySelector('.nav-sidebar').style.width = settings.sidebarWidth + 'px';
+        document.querySelector('.nav-sidebar').style.minWidth = settings.sidebarWidth + 'px';
+      }
+    })();
+
+    // 检查登录状态
+    function checkAuth() {
+      const token = localStorage.getItem('access_token');
+      const user = getStoredUser();
+
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (user) {
+        document.getElementById('userName').textContent = user.username;
+        document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+        document.getElementById('userRole').textContent = user.is_admin ? '管理员' : '普通用户';
+      }
+    }
+
+    // 获取本地存储的用户信息
+    function getStoredUser() {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    }
+
+    // 退出登录
+    async function logout() {
+      const token = localStorage.getItem('access_token');
+
+      try {
+        await fetch(`${API_BASE}/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (e) {
+        // 忽略错误
+      }
+
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
+    // 页面加载时检查登录状态
+    checkAuth();
+  </script>
+</body>
+</html>

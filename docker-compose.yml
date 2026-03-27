@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock_trade_backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./stock_trade.db:/app/stock_trade.db
+    networks:
+      - stock_trade_net
+    depends_on:
+      - mongodb
+      - redis
+
+  frontend:
+    image: nginx:alpine
+    container_name: stock_trade_frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - stock_trade_net
+
+  # ========== AI研报分析模块服务 ==========
+  mongodb:
+    image: mongo:7.0
+    container_name: stock_trade_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - stock_trade_net
+    healthcheck:
+      test: ["CMD", "echo", "db.runCommand('ping').ok", "|", "mongosh", "localhost:27017/test", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: stock_trade_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock_trade_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  stock_trade_net:
+    driver: bridge
