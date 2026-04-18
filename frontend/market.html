@@ -425,6 +425,303 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* AI消息解读助手 - 悬浮面板 */
+    .ai-assistant-toggle {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      z-index: 1000;
+      transition: all 0.3s;
+    }
+    .ai-assistant-toggle:hover {
+      background: #1d4ed8;
+      transform: translateY(-50%) scale(1.1);
+    }
+    .ai-assistant-toggle svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+    .ai-assistant-toggle .ai-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      background: #ef4444;
+      border-radius: 50%;
+      font-size: 10px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ai-assistant-panel {
+      position: fixed;
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 380px;
+      max-height: 70vh;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .ai-assistant-panel.collapsed {
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%) scale(0.95);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ai-assistant-header {
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ai-assistant-header .title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ai-assistant-header .title svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+    .ai-assistant-header .close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .ai-assistant-header .close-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .ai-assistant-header .close-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: white;
+    }
+
+    .ai-drop-zone {
+      margin: 16px;
+      padding: 24px;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .ai-drop-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.05);
+    }
+    .ai-drop-zone svg {
+      width: 40px;
+      height: 40px;
+      fill: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .ai-drop-zone.dragover svg {
+      fill: var(--primary);
+    }
+    .ai-drop-zone .hint {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .ai-drop-zone.dragover .hint {
+      color: var(--primary);
+    }
+
+    .ai-analysis-result {
+      flex: 1;
+      padding: 0 16px 16px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .ai-analysis-result .news-brief {
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .ai-analysis-result .news-brief .source {
+      font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .ai-analysis-result .analysis-content {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-main);
+      white-space: pre-wrap;
+    }
+    .ai-analysis-result .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+    }
+    .ai-analysis-result .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+    .ai-analysis-result .error {
+      text-align: center;
+      padding: 20px;
+      color: var(--error);
+    }
+
+    /* 新闻预览区域 */
+    .ai-news-preview {
+      margin: 0 16px 16px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .ai-news-preview .preview-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .ai-news-preview .preview-content {
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.6;
+      max-height: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      margin-bottom: 12px;
+    }
+    .ai-news-preview .preview-source {
+      font-size: 12px;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .ai-news-preview .preview-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 开始解读按钮 */
+    .start-analyze-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .start-analyze-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+    .start-analyze-btn:active {
+      transform: translateY(0);
+    }
+    .start-analyze-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 美化的分析结果 */
+    .analysis-section {
+      margin-bottom: 16px;
+    }
+    .analysis-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .analysis-section-content {
+      font-size: 13px;
+      color: var(--text-main);
+      line-height: 1.8;
+    }
+    .analysis-section-content p {
+      margin-bottom: 8px;
+    }
+    .analysis-section-content strong {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .analysis-section-content ul, .analysis-section-content ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    .analysis-section-content li {
+      margin-bottom: 4px;
+    }
+    .analysis-warning {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .analysis-warning .warning-title {
+      color: var(--error);
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .analysis-disclaimer {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -517,6 +814,35 @@
     </div>
   </div>
 
+  <!-- AI消息解读助手悬浮面板 -->
+  <div id="aiAssistantPanel" class="ai-assistant-panel collapsed">
+    <div class="ai-assistant-header">
+      <div class="title">
+        <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+        AI消息解读助手
+      </div>
+      <button class="close-btn" onclick="toggleAiPanel()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div id="aiDropZone" class="ai-drop-zone">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      <div class="hint">拖动新闻到此处进行AI解读</div>
+    </div>
+    <div id="aiNewsPreview" class="ai-news-preview" style="display: none;">
+      <div class="preview-header">待解读新闻</div>
+      <div class="preview-content"></div>
+      <button id="startAnalyzeBtn" class="start-analyze-btn" onclick="startAnalyze()">开始解读</button>
+    </div>
+    <div id="aiAnalysisResult" class="ai-analysis-result"></div>
+  </div>
+
+  <!-- AI助手悬浮按钮 -->
+  <div id="aiAssistantToggle" class="ai-assistant-toggle" onclick="toggleAiPanel()">
+    <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+    <span class="ai-badge">1</span>
+  </div>
+
   <script>
     const API_BASE = 'http://localhost:8017/api';
 
@@ -607,8 +933,9 @@
         const isRed = item.is_red || (item.title && (item.title.includes('快讯') || item.title.includes('突发') || item.title.includes('紧急')));
         const subjects = item.subjects || [];
 
+        const newsItem = JSON.stringify(item);
         html += `
-          <div class="news-item ${isRed ? 'red' : ''}" onclick="showNewsDetail('${item.url || ''}', '${item.title || item.content || ''}')">
+          <div class="news-item ${isRed ? 'red' : ''}" draggable="true" ondragstart="handleNewsDragStart(event)" data-news="${encodeURIComponent(newsItem)}" data-source="${source}" onclick="showNewsDetail('${item.url || ''}', '${item.title || item.content || ''}')">
             <div class="news-time">
               <span class="news-tag ${isRed ? 'red' : ''}">${item.time}</span>
               ${isRed ? '<span class="news-tag red">重要</span>' : ''}
@@ -1416,8 +1743,286 @@
 
     window.addEventListener('beforeunload', cleanup);
 
+    // ========== AI消息解读助手 ==========
+    let aiPanelOpen = false; // 默认收起状态
+    let pendingNews = null; // 待解读的新闻
+
+    function toggleAiPanel() {
+      aiPanelOpen = !aiPanelOpen;
+      const panel = document.getElementById('aiAssistantPanel');
+      const toggle = document.getElementById('aiAssistantToggle');
+      if (aiPanelOpen) {
+        panel.classList.remove('collapsed');
+        toggle.innerHTML = `
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        `;
+      } else {
+        panel.classList.add('collapsed');
+        toggle.innerHTML = `
+          <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+          <span class="ai-badge">1</span>
+        `;
+      }
+    }
+
+    // 初始化AI面板为收起状态
+    function initAiPanel() {
+      const panel = document.getElementById('aiAssistantPanel');
+      const toggle = document.getElementById('aiAssistantToggle');
+      if (panel && !aiPanelOpen) {
+        panel.classList.add('collapsed');
+        toggle.innerHTML = `
+          <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+          <span class="ai-badge">1</span>
+        `;
+      }
+    }
+
+    // 拖拽到AI助手
+    function handleNewsDragStart(event) {
+      const newsItem = event.target.closest('.news-item');
+      if (newsItem) {
+        const newsJson = newsItem.dataset.news;
+        const source = newsItem.dataset.source;
+        event.dataTransfer.setData('application/json', newsJson);
+        event.dataTransfer.setData('text/source', source);
+        event.dataTransfer.effectAllowed = 'copy';
+      }
+    }
+
+    function setupAiDropZone() {
+      const dropZone = document.getElementById('aiDropZone');
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'));
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'));
+      });
+      dropZone.addEventListener('drop', e => {
+        const newsJson = e.dataTransfer.getData('application/json');
+        if (newsJson) {
+          try {
+            const news = JSON.parse(decodeURIComponent(newsJson));
+            const source = e.dataTransfer.getData('text/source') || '未知来源';
+            news.source = source;
+            pendingNews = news;
+            showNewsPreview(news);
+          } catch (err) {
+            console.error('Parse news error:', err);
+          }
+        }
+      });
+    }
+
+    // 显示新闻预览
+    function showNewsPreview(news) {
+      const dropZone = document.getElementById('aiDropZone');
+      const preview = document.getElementById('aiNewsPreview');
+      const previewContent = preview.querySelector('.preview-content');
+
+      // 隐藏dropZone，显示preview
+      dropZone.style.display = 'none';
+      preview.style.display = 'block';
+
+      // 填充预览内容
+      const content = news.title || news.content || '';
+      const source = news.source || '未知来源';
+      const time = news.time || '';
+
+      previewContent.innerHTML = `
+        <div class="preview-source">${source}</div>
+        <div class="preview-content">${escapeHtml(content)}</div>
+        ${time ? `<div class="preview-time">${time}</div>` : ''}
+      `;
+
+      // 启用解读按钮
+      const btn = document.getElementById('startAnalyzeBtn');
+      btn.disabled = false;
+      btn.textContent = '开始解读';
+    }
+
+    // 在预览区域也支持拖拽替换
+    function setupPreviewDropZone() {
+      const preview = document.getElementById('aiNewsPreview');
+      if (!preview) return;
+
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        preview.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+      ['dragenter', 'dragover'].forEach(evt => {
+        preview.addEventListener(evt, () => preview.style.borderColor = 'var(--primary)');
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        preview.addEventListener(evt, () => preview.style.borderColor = '');
+      });
+      preview.addEventListener('drop', e => {
+        preview.style.borderColor = '';
+        const newsJson = e.dataTransfer.getData('application/json');
+        if (newsJson) {
+          try {
+            const news = JSON.parse(decodeURIComponent(newsJson));
+            const source = e.dataTransfer.getData('text/source') || '未知来源';
+            news.source = source;
+            pendingNews = news;
+            showNewsPreview(news);
+          } catch (err) {
+            console.error('Parse news error:', err);
+          }
+        }
+      });
+    }
+
+    // 开始解读
+    function startAnalyze() {
+      if (!pendingNews) return;
+
+      const btn = document.getElementById('startAnalyzeBtn');
+      btn.disabled = true;
+      btn.textContent = '解读中...';
+
+      analyzeNewsWithAI(pendingNews);
+    }
+
+    // 让新闻项可拖拽
+    function makeNewsItemDraggable(news) {
+      return function() {
+        const items = document.querySelectorAll('.news-item');
+        items.forEach((item, idx) => {
+          if (!item.dataset.dragSetup) {
+            item.dataset.dragSetup = 'true';
+            item.draggable = true;
+            item.addEventListener('dragstart', e => {
+              const newsData = news[idx] || news;
+              e.dataTransfer.setData('application/json', JSON.stringify(newsData));
+              e.dataTransfer.effectAllowed = 'copy';
+            });
+          }
+        });
+      };
+    }
+
+    // 使用AI分析新闻
+    async function analyzeNewsWithAI(news) {
+      const resultDiv = document.getElementById('aiAnalysisResult');
+      const preview = document.getElementById('aiNewsPreview');
+      const content = news.title || news.content || '';
+      const source = news.source || '未知来源';
+
+      // 隐藏预览，显示结果区
+      preview.style.display = 'none';
+      resultDiv.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>AI分析中...</div>
+        </div>
+      `;
+
+      // 确保面板是展开的
+      if (!aiPanelOpen) {
+        toggleAiPanel();
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/market/news-analysis`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ news_content: content, source: source })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          const beautifiedContent = beautifyMarkdown(data.analysis);
+          resultDiv.innerHTML = beautifiedContent;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="error">分析失败: ${data.error || '未知错误'}</div>
+          `;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = `
+          <div class="error">请求失败: ${e.message}</div>
+        `;
+      }
+
+      // 清空待解读新闻
+      pendingNews = null;
+    }
+
+    // 美化Markdown内容
+    function beautifyMarkdown(text) {
+      if (!text) return '';
+
+      let html = text;
+
+      // 移除免责声明开头的分隔线
+      html = html.replace(/\n---\n\*\*\*\*/g, '\n');
+      html = html.replace(/\n---\n+/g, '\n');
+
+      // 处理标题层级
+      html = html.replace(/^### (.+)$/gm, '<div class="analysis-section-title">$1</div>');
+      html = html.replace(/^## (.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title">$1</div>');
+      html = html.replace(/^# (.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title" style="font-size:16px;">$1</div>');
+
+      // 处理加粗 **text**
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+      // 处理斜体 *text*
+      html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?!\*)\*(?!\*)/g, '<em>$1</em>');
+
+      // 处理列表项
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+      // 处理段落分隔
+      html = html.replace(/\n\n+/g, '</p><p>');
+
+      // 包装未处理的文本
+      if (!html.includes('<div class="analysis-section')) {
+        html = '<div class="analysis-section"><div class="analysis-section-content"><p>' + html + '</p></div></div>';
+      }
+
+      // 添加分隔线后的内容作为风险提示或备注
+      const parts = html.split(/(<div class="analysis-section-title">.*?免责声明.*?<\/div>)/i);
+      if (parts.length > 1) {
+        html = parts[0] + '<div class="analysis-disclaimer">' + parts[1] + '</div>';
+      }
+
+      // 确保所有section有正确的结构
+      html = html.replace(/<\/div>\s*(?=<div class="analysis-section)/g, '</div></div>');
+
+      return html;
+    }
+
+    // 重置AI助手到初始状态
+    function resetAiAssistant() {
+      const dropZone = document.getElementById('aiDropZone');
+      const preview = document.getElementById('aiNewsPreview');
+      const resultDiv = document.getElementById('aiAnalysisResult');
+
+      dropZone.style.display = 'block';
+      preview.style.display = 'none';
+      resultDiv.innerHTML = '';
+      pendingNews = null;
+
+      const btn = document.getElementById('startAnalyzeBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '开始解读';
+      }
+    }
+
+
     // 初始化
     checkAuth();
+    initAiPanel();
+    setupAiDropZone();
+    setupPreviewDropZone();
   </script>
 </body>
 </html>

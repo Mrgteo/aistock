@@ -808,6 +808,7 @@
       <!-- 分析师 Tab 导航 -->
       <div class="analyst-tabs" id="analystTabs">
         <div class="analyst-tab active" data-tab="summary" onclick="switchTab('summary')">📋 综合结论</div>
+        <div class="analyst-tab" data-tab="discussion" onclick="switchTab('discussion')">💬 团队讨论</div>
         <div class="analyst-tab" data-tab="technical" onclick="switchTab('technical')">📊 技术</div>
         <div class="analyst-tab" data-tab="fundamental" onclick="switchTab('fundamental')">💼 基本面</div>
         <div class="analyst-tab" data-tab="fund_flow" onclick="switchTab('fund_flow')">💰 资金</div>
@@ -860,6 +861,16 @@
               <div style="margin-bottom:8px;"><strong>止盈位：</strong><span id="decisionTakeProfit">--</span> <strong style="margin-left:12px;">止损位：</strong><span id="decisionStopLoss">--</span></div>
               <div style="color:#ef4444; font-size:13px;"><strong>⚠️ 风险提示：</strong><span id="decisionRisk">--</span></div>
             </div>
+          </div>
+
+          <!-- 团队讨论卡片 -->
+          <div class="analyst-card" id="card-discussion" style="display:none;">
+            <h3>💬 团队讨论</h3>
+            <div class="agent-info">
+              <p>👨‍💼 领队协调各分析师进行讨论</p>
+              <p>📌 讨论内容：观点一致性分析、风险收益评估、投资时机判断</p>
+            </div>
+            <div class="analysis-text" id="discussion-analysis">--</div>
           </div>
 
           <!-- 技术分析卡片 -->
@@ -981,6 +992,7 @@
           <div class="analyst-tab" data-tab="risk" onclick="switchHistoryTab('risk')">⚠️ 风险</div>
           <div class="analyst-tab" data-tab="sentiment" onclick="switchHistoryTab('sentiment')">📈 情绪</div>
           <div class="analyst-tab" data-tab="news" onclick="switchHistoryTab('news')">📰 新闻</div>
+          <div class="analyst-tab" data-tab="discussion" onclick="switchHistoryTab('discussion')">💬 团队讨论</div>
         </div>
 
         <!-- 分析内容区 -->
@@ -1076,6 +1088,12 @@
             </div>
             <div class="analysis-text" id="history-news-analysis">--</div>
           </div>
+
+          <!-- 团队讨论卡片 -->
+          <div class="analyst-card" id="history-card-discussion" style="display:none;">
+            <h3>💬 团队讨论</h3>
+            <div class="analysis-text" id="history-discussion-analysis">--</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1091,6 +1109,10 @@
     // Markdown 转 HTML
     function parseMarkdown(text) {
       if (!text) return '';
+      // 确保 text 是字符串
+      if (typeof text !== 'string') {
+        text = String(text);
+      }
       let html = text;
 
       // 转义 HTML 特殊字符
@@ -1532,11 +1554,16 @@
         } else {
           // 批量分析
           const analysisMode = document.querySelector('input[name="analysisMode"]:checked')?.value || 'sequential';
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 600000); // 10分钟超时
+
           const res = await fetch(`${API_BASE}/api/analysis/batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ symbols, enabled_analysts: enabledAnalysts, analysis_mode: analysisMode })
+            body: JSON.stringify({ symbols, enabled_analysts: enabledAnalysts, analysis_mode: analysisMode }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
 
           if (!res.ok) throw new Error('批量分析失败');
 
@@ -1614,6 +1641,13 @@
           if (timeEl) timeEl.textContent = agent.timestamp || '--';
           if (analysisEl) analysisEl.innerHTML = parseMarkdown(agent.analysis) || '--';
         }
+      }
+
+      // 更新团队讨论
+      const discussionEl = document.getElementById('discussion-analysis');
+      if (discussionEl) {
+        const discText = data.discussion_result;
+        discussionEl.innerHTML = (discText && typeof discText === 'string') ? parseMarkdown(discText) : '--';
       }
 
       // 默认显示综合结论
@@ -1844,6 +1878,13 @@
             if (timeEl) timeEl.textContent = agent.timestamp || record.analysis_date || '--';
             if (analysisEl) analysisEl.innerHTML = parseMarkdown(agent.analysis) || '--';
           }
+        }
+
+        // 更新团队讨论
+        const discussionEl = document.getElementById('history-discussion-analysis');
+        if (discussionEl) {
+          const discText = record.discussion_result;
+          discussionEl.innerHTML = (discText && typeof discText === 'string') ? parseMarkdown(discText) : '--';
         }
 
         // 默认显示综合结论

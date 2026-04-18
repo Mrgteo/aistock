@@ -2,6 +2,8 @@
 股票分析路由 - AI分析功能
 """
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 import requests
 from fastapi import APIRouter, HTTPException, Depends
@@ -13,6 +15,9 @@ from backend.routers.stock import get_code_type, get_ifzq_kline, get_indicators,
 from backend.routers.analysis_db import db
 
 router = APIRouter(tags=["股票分析"])
+
+# 通用线程池，用于执行同步阻塞操作
+_executor = ThreadPoolExecutor(max_workers=8)
 
 
 def get_stock_name(qt_data, default_name=''):
@@ -225,19 +230,22 @@ async def single_stock_analysis(req: SingleAnalysisReq):
                 'news': True
             }
 
-        # 运行多分析师分析
+        # 运行多分析师分析（使用异步版本，避免阻塞事件循环）
         from backend.services.analysis_agents import get_analysis_agents
         agents = get_analysis_agents()
 
-        agents_results = agents.run_multi_agent_analysis(
+        agents_results = await agents.run_multi_agent_analysis_async(
             stock_info=stock_info,
             indicators=indicators,
             news_data=news_text,
             enabled_analysts=req.enabled_analysts
         )
 
-        # 生成综合决策
-        final_decision = agents.make_final_decision(agents_results, stock_info, indicators)
+        # 生成综合决策（使用异步版本，包含团队讨论）
+        final_decision = await agents.make_final_decision_async(agents_results, stock_info, indicators)
+
+        # 从 final_decision 中提取讨论结果
+        discussion_result = final_decision.get('discussion', '') if isinstance(final_decision, dict) else ''
 
         # 保存到历史记录
         saved_record_id = None
@@ -262,6 +270,7 @@ async def single_stock_analysis(req: SingleAnalysisReq):
                 indicators=indicators_data,
                 agents_results=agents_results,
                 final_decision=final_decision,
+                discussion_result=discussion_result,
                 news_link=news_link,
                 fund_link=fund_link
             )
@@ -286,6 +295,7 @@ async def single_stock_analysis(req: SingleAnalysisReq):
             },
             "agents_results": agents_results,
             "final_decision": final_decision,
+            "discussion_result": discussion_result,
             "news_link": news_link,
             "fund_link": fund_link,
             "saved_record_id": saved_record_id
@@ -304,8 +314,9 @@ class BatchAnalysisReq(BaseModel):
 
 
 def _analyze_single_stock(symbol: str, enabled_analysts: Dict[str, bool]) -> Dict[str, Any]:
-    """分析单只股票的内部函数"""
+    """分析单只股票的内部函数（同步版本）"""
     from backend.services.analysis_agents import get_analysis_agents
+
     agents = get_analysis_agents()
 
     try:
@@ -338,6 +349,15 @@ def _analyze_single_stock(symbol: str, enabled_analysts: Dict[str, bool]) -> Dic
             'change_percent': str(indicators.get('change_pct', 0)),
         }
 
+        # 添加基本面信息到 stock_info
+        try:
+            if qt_data:
+                stock_info['pe_ratio'] = qt_data.get('pe', 'N/A')
+                stock_info['pb_ratio'] = qt_data.get('pb', 'N/A')
+                stock_info['market_cap'] = qt_data.get('sz', 'N/A')
+        except:
+            pass
+
         # 获取新闻
         news_text, _ = get_news(code)
 
@@ -352,7 +372,7 @@ def _analyze_single_stock(symbol: str, enabled_analysts: Dict[str, bool]) -> Dic
                 'news': True
             }
 
-        # 运行多分析师分析
+        # 运行多分析师分析（同步版本）
         agents_results = agents.run_multi_agent_analysis(
             stock_info=stock_info,
             indicators=indicators,
@@ -360,7 +380,7 @@ def _analyze_single_stock(symbol: str, enabled_analysts: Dict[str, bool]) -> Dic
             enabled_analysts=enabled_analysts
         )
 
-        # 生成综合决策
+        # 生成综合决策（包含团队讨论，同步版本）
         final_decision = agents.make_final_decision(agents_results, stock_info, indicators)
 
         return {
@@ -389,59 +409,212 @@ def _analyze_single_stock(symbol: str, enabled_analysts: Dict[str, bool]) -> Dic
         }
 
 
-@router.post("/analysis/batch")
-async def batch_stock_analysis(req: BatchAnalysisReq):
-    """批量股票分析"""
-    import concurrent.futures
+async def _analyze_single_stock_async(symbol: str, enabled_analysts: Dict[str, bool]) -> Dict[str, Any]:
+    """分析单只股票的内部函数（异步版本，使用httpx异步HTTP）"""
+    from backend.services.analysis_agents import get_analysis_agents
 
-    results = []
-    enabled_analysts = req.enabled_analysts
+    agents = get_analysis_agents()
 
-    if req.analysis_mode == "parallel":
-        # 多线程并行分析
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_symbol = {
-                executor.submit(_analyze_single_stock, symbol, enabled_analysts): symbol
-                for symbol in req.symbols
+    try:
+        # 获取股票代码和市场
+        code, market = get_code_type(symbol)
+
+        # 获取K线数据（同步函数，放到线程池执行）
+        loop = asyncio.get_event_loop()
+        df, qt_data = await loop.run_in_executor(
+            _executor, get_ifzq_kline, code, 'day', 500
+        )
+        if df is None:
+            return {
+                "symbol": symbol,
+                "success": False,
+                "error": f"无法获取K线数据"
             }
 
-            # 按原始顺序收集结果
-            symbol_to_result = {}
-            for future in concurrent.futures.as_completed(future_to_symbol):
-                symbol = future_to_symbol[future]
-                try:
-                    result = future.result(timeout=300)
-                    symbol_to_result[symbol] = result
-                except Exception as e:
-                    symbol_to_result[symbol] = {
-                        "symbol": symbol,
-                        "success": False,
-                        "error": str(e)
-                    }
+        # 合并实时数据（同步函数，放到线程池执行）
+        if qt_data:
+            df = await loop.run_in_executor(
+                _executor, merge_realtime_kline, df, code, qt_data
+            )
 
-            # 按原始顺序输出结果
-            for symbol in req.symbols:
-                results.append(symbol_to_result[symbol])
-    else:
-        # 顺序分析（默认）
-        for symbol in req.symbols:
-            result = _analyze_single_stock(symbol, enabled_analysts)
+        # 获取技术指标（同步函数，放到线程池执行）
+        indicators = await loop.run_in_executor(
+            _executor, get_indicators, df
+        )
+
+        # 构建股票信息
+        stock_info = {
+            'symbol': symbol,
+            'code': code,
+            'market': market,
+            'name': get_stock_name(qt_data, symbol),
+            'current_price': str(indicators.get('price', 'N/A')),
+            'change_percent': str(indicators.get('change_pct', 0)),
+        }
+
+        # 添加基本面信息到 stock_info
+        try:
+            if qt_data:
+                stock_info['pe_ratio'] = qt_data.get('pe', 'N/A')
+                stock_info['pb_ratio'] = qt_data.get('pb', 'N/A')
+                stock_info['market_cap'] = qt_data.get('sz', 'N/A')
+        except:
+            pass
+
+        # 获取新闻（同步函数，放到线程池执行）
+        news_text, _ = await loop.run_in_executor(
+            _executor, get_news, code
+        )
+
+        # 默认启用的分析师
+        if enabled_analysts is None:
+            enabled_analysts = {
+                'technical': True,
+                'fundamental': True,
+                'fund_flow': True,
+                'risk': True,
+                'sentiment': True,
+                'news': True
+            }
+
+        # 运行多分析师分析（异步版本，使用httpx）
+        agents_results = await agents.run_multi_agent_analysis_async(
+            stock_info=stock_info,
+            indicators=indicators,
+            news_data=news_text,
+            enabled_analysts=enabled_analysts
+        )
+
+        # 生成综合决策（异步版本，使用httpx）
+        final_decision = await agents.make_final_decision_async(agents_results, stock_info, indicators)
+
+        return {
+            "symbol": symbol,
+            "success": True,
+            "stock_info": stock_info,
+            "indicators": {
+                'price': indicators.get('price'),
+                'change_pct': indicators.get('change_pct'),
+                'ma5': indicators.get('ma5'),
+                'ma10': indicators.get('ma10'),
+                'ma20': indicators.get('ma20'),
+                'ma60': indicators.get('ma60'),
+                'rsi14': indicators.get('rsi14'),
+            },
+            "agents_results": agents_results,
+            "final_decision": final_decision,
+            "agents_count": len(agents_results)
+        }
+
+    except Exception as e:
+        return {
+            "symbol": symbol,
+            "success": False,
+            "error": str(e)
+        }
+
+
+# 批量分析专用的线程池
+_batch_executor = ThreadPoolExecutor(max_workers=4)
+
+
+@router.post("/analysis/batch")
+async def batch_stock_analysis(req: BatchAnalysisReq):
+    """批量股票分析（使用子进程隔离，避免阻塞）"""
+    import subprocess
+    import sys
+    import os
+    import tempfile
+
+    # 将请求数据写入临时文件，避免shell转义问题
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        input_data = {
+            'symbols': req.symbols,
+            'enabled_analysts': req.enabled_analysts
+        }
+        json.dump(input_data, f)
+        input_file = f.name
+
+    try:
+        # 运行子进程脚本
+        script = '''
+import sys
+import os
+import json
+from concurrent.futures import ThreadPoolExecutor
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 读取输入数据
+with open(sys.argv[1], 'r') as f:
+    data = json.load(f)
+
+symbols = data['symbols']
+enabled_analysts = data.get('enabled_analysts', {})
+
+def analyze_one(symbol, enabled_analysts):
+    from backend.routers.analysis import _analyze_single_stock
+    return _analyze_single_stock(symbol, enabled_analysts)
+
+# 使用线程池并行分析
+with ThreadPoolExecutor(max_workers=min(4, len(symbols))) as executor:
+    futures = {executor.submit(analyze_one, s, enabled_analysts): s for s in symbols}
+    results = []
+    for future in futures:
+        symbol = futures[future]
+        try:
+            result = future.result(timeout=180)  # 每个股票3分钟超时
             results.append(result)
+        except Exception as e:
+            results.append({"symbol": symbol, "success": False, "error": str(e)})
+
+print("BATCH_RESULT:" + json.dumps(results))
+'''
+        result = subprocess.run(
+            [sys.executable, '-c', script, input_file],
+            capture_output=True,
+            text=True,
+            timeout=600,  # 10分钟超时
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+
+        # 解析子进程输出
+        processed_results = []
+        if result.stdout:
+            for line in result.stdout.split('\n'):
+                if line.startswith('BATCH_RESULT:'):
+                    processed_results = json.loads(line[len('BATCH_RESULT:'):])
+
+        if not processed_results and result.stderr:
+            print(f"❌ 批量分析子进程错误: {result.stderr[:500]}")
+
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="批量分析超时（10分钟）")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量分析失败: {str(e)}")
+    finally:
+        # 清理临时文件
+        try:
+            os.unlink(input_file)
+        except:
+            pass
 
     # 保存成功的分析结果到历史记录
     saved_count = 0
     try:
-        for result in results:
-            if result.get('success') and result.get('stock_info'):
-                final_dec = result.get('final_decision', {})
+        for result_item in processed_results:
+            if result_item.get('success') and result_item.get('stock_info'):
+                final_dec = result_item.get('final_decision', {})
+                discussion_res = final_dec.get('discussion', '') if isinstance(final_dec, dict) else ''
                 db.save_analysis(
-                    symbol=result.get('symbol'),
-                    stock_name=result.get('stock_info', {}).get('name', result.get('symbol')),
+                    symbol=result_item.get('symbol'),
+                    stock_name=result_item.get('stock_info', {}).get('name', result_item.get('symbol')),
                     period='day',
-                    stock_info=result.get('stock_info'),
-                    indicators=result.get('indicators'),
-                    agents_results=result.get('agents_results'),
-                    final_decision=final_dec
+                    stock_info=result_item.get('stock_info'),
+                    indicators=result_item.get('indicators'),
+                    agents_results=result_item.get('agents_results'),
+                    final_decision=final_dec,
+                    discussion_result=discussion_res
                 )
                 saved_count += 1
         print(f"✅ 批量分析: 成功保存 {saved_count} 条历史记录")
@@ -452,7 +625,7 @@ async def batch_stock_analysis(req: BatchAnalysisReq):
         "success": True,
         "total": len(req.symbols),
         "analysis_mode": req.analysis_mode,
-        "results": results,
+        "results": processed_results,
         "saved_count": saved_count
     }
 

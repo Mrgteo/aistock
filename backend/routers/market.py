@@ -6,7 +6,7 @@ import json
 import re
 import time
 import requests
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Optional, List
 
 router = APIRouter(tags=["市场数据"])
@@ -612,3 +612,40 @@ async def get_ths_news_api(
         "next_page": result.get("next_page", page),
         "timestamp": int(time.time())
     }
+
+
+@router.post("/news-analysis")
+async def analyze_news(
+    news_content: str = Body(..., description="新闻内容"),
+    source: str = Body(None, description="新闻来源")
+):
+    """AI新闻分析 - 对拖拽的新闻进行AI解读"""
+    try:
+        from backend.services.llm_service import LLMService
+
+        llm_service = LLMService()
+
+        # 构建股票信息（通用信息，不针对特定股票）
+        stock_info = {
+            "symbol": "news",
+            "name": source or "市场新闻"
+        }
+
+        # 调用新闻分析
+        news_data = f"新闻内容：\n{news_content}\n\n新闻来源：{source or '未知'}"
+
+        analysis_result = llm_service.news_analysis(stock_info, news_data)
+
+        return {
+            "success": True,
+            "analysis": analysis_result,
+            "source": source,
+            "timestamp": int(time.time())
+        }
+    except Exception as e:
+        print(f"News analysis error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": int(time.time())
+        }

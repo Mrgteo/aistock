@@ -39,6 +39,7 @@ class AnalysisDB:
                 indicators TEXT,
                 agents_results TEXT,
                 final_decision TEXT,
+                discussion_result TEXT,
                 news_link TEXT,
                 fund_link TEXT,
                 created_at TEXT NOT NULL
@@ -49,7 +50,7 @@ class AnalysisDB:
         conn.close()
 
     def save_analysis(self, symbol, stock_name, period='day', stock_info=None, indicators=None,
-                     agents_results=None, final_decision=None, news_link='', fund_link=''):
+                     agents_results=None, final_decision=None, discussion_result=None, news_link='', fund_link=''):
         """保存分析记录到数据库"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -63,13 +64,15 @@ class AnalysisDB:
         indicators_json = json.dumps(indicators or {}, ensure_ascii=False, default=str)
         agents_results_json = json.dumps(agents_results or {}, ensure_ascii=False, default=str)
         final_decision_json = json.dumps(final_decision or {}, ensure_ascii=False, default=str)
+        # discussion_result 是字符串，直接存储或转为JSON字符串
+        discussion_result_json = json.dumps(discussion_result) if discussion_result else ''
 
         cursor.execute('''
             INSERT INTO analysis_records
-            (symbol, stock_name, analysis_date, period, stock_info, indicators, agents_results, final_decision, news_link, fund_link, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (symbol, stock_name, analysis_date, period, stock_info, indicators, agents_results, final_decision, news_link, fund_link, created_at, discussion_result)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (symbol, stock_name, analysis_date, period, stock_info_json, indicators_json,
-              agents_results_json, final_decision_json, news_link, fund_link, created_at))
+              agents_results_json, final_decision_json, news_link, fund_link, created_at, discussion_result_json))
 
         conn.commit()
         record_id = cursor.lastrowid
@@ -197,7 +200,7 @@ class AnalysisDB:
 
         # record indices: 0=id, 1=symbol, 2=stock_name, 3=analysis_date, 4=period,
         # 5=stock_info, 6=indicators, 7=agents_results, 8=final_decision,
-        # 9=news_link, 10=fund_link, 11=created_at
+        # 9=news_link, 10=fund_link, 11=created_at, 12=discussion_result
 
         result = {
             'id': record[0],
@@ -230,6 +233,20 @@ class AnalysisDB:
 
         result['news_link'] = record[9] or ''
         result['fund_link'] = record[10] or ''
+
+        try:
+            # discussion_result 可能是字符串或JSON字符串
+            dr = record[12]
+            if dr:
+                try:
+                    result['discussion_result'] = json.loads(dr)
+                except:
+                    # 如果不是JSON，说明是普通字符串，直接使用
+                    result['discussion_result'] = dr
+            else:
+                result['discussion_result'] = ''
+        except:
+            result['discussion_result'] = ''
 
         return result
 
