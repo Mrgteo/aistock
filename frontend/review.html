@@ -608,10 +608,13 @@
           plan_entry: parseFloat(el.querySelector('.t-pe').value) || 0,
           plan_sl: parseFloat(el.querySelector('.t-psl').value) || 0,
           plan_tp: parseFloat(el.querySelector('.t-ptp').value) || 0,
+          position: parseFloat(el.querySelector('.t-pos').value) || 0,
           actual_entry: parseFloat(el.querySelector('.t-ae').value) || 0,
           actual_exit: parseFloat(el.querySelector('.t-ax').value) || 0,
+          stop_loss_reason: el.querySelector('.t-slr').value,
+          followup_evaluation: el.querySelector('.t-fue').value,
           reason: el.querySelector('.t-reason').value,
-          emotion: el.querySelector('.t-emotion').value,
+          order_type: el.querySelector('.t-ot').value,
           ai_review: cleanMarkdown(el.querySelector('.ai-review-result').textContent)
         };
       });
@@ -702,7 +705,7 @@
 
     function addTrade() {
       tradesData.push({
-        id: Date.now().toString(), symbol: "", direction: "long", plan_entry: 0, plan_sl: 0, plan_tp: 0, actual_entry: 0, actual_exit: 0, reason: "", emotion: "", ai_review: ""
+        id: Date.now().toString(), symbol: "", direction: "long", plan_entry: 0, plan_sl: 0, plan_tp: 0, position: 0, actual_entry: 0, actual_exit: 0, stop_loss_reason: "", followup_evaluation: "", reason: "", order_type: "计划单", ai_review: ""
       });
       renderTrades();
     }
@@ -730,10 +733,13 @@
           plan_entry: parseFloat(trade.plan_entry) || 0,
           plan_sl: parseFloat(trade.plan_sl) || 0,
           plan_tp: parseFloat(trade.plan_tp) || 0,
+          position: parseFloat(trade.position) || 0,
           actual_entry: parseFloat(trade.actual_entry) || 0,
           actual_exit: parseFloat(trade.actual_exit) || 0,
+          stop_loss_reason: String(trade.stop_loss_reason || "无"),
+          followup_evaluation: String(trade.followup_evaluation || "无"),
           reason: String(trade.reason || "无"),
-          emotion: String(trade.emotion || "无"),
+          order_type: String(trade.order_type || "计划单"),
           ai_review: String(trade.ai_review || "")
         };
 
@@ -773,7 +779,11 @@
         const div = document.createElement('div');
         div.className = 'trade-item';
         div.dataset.id = t.id;
-        
+
+        // 止盈止损理由和后续评估textarea
+        const slrPlaceholder = t.stop_loss_reason || "";
+        const fuePlaceholder = t.followup_evaluation || "";
+
         div.innerHTML = `
           <div class="trade-grid">
             <div class="trade-input"><label>标的代码</label><input type="text" class="t-symbol" value="${t.symbol}"></div>
@@ -783,20 +793,36 @@
                 <option value="short" ${t.direction==='short'?'selected':''}>做空</option>
               </select>
             </div>
-            <div class="trade-input"><label>情绪状态</label><input type="text" class="t-emotion" value="${t.emotion}" placeholder="如：冲动、冷静"></div>
+            <div class="trade-input"><label>交割单属性</label>
+              <select class="t-ot">
+                <option value="计划单" ${(t.order_type||'计划单')==='计划单'?'selected':''}>计划单</option>
+                <option value="随手单" ${t.order_type==='随手单'?'selected':''}>随手单</option>
+              </select>
+            </div>
             <div class="trade-input"><label>入场理由</label><input type="text" class="t-reason" value="${t.reason}"></div>
-            
+
             <div class="trade-input"><label>计划入场价</label><input type="number" class="t-pe" value="${t.plan_entry}"></div>
             <div class="trade-input"><label>计划止损价</label><input type="number" class="t-psl" value="${t.plan_sl}"></div>
             <div class="trade-input"><label>计划目标价</label><input type="number" class="t-ptp" value="${t.plan_tp}"></div>
-            <div style="grid-column:span 1;"></div>
-            
+            <div class="trade-input"><label>仓位(成)</label><input type="number" class="t-pos" value="${t.position || 0}" placeholder="如：3成"></div>
+
             <div class="trade-input"><label>实际入场价</label><input type="number" class="t-ae" value="${t.actual_entry}"></div>
             <div class="trade-input"><label>实际出场价</label><input type="number" class="t-ax" value="${t.actual_exit}"></div>
           </div>
-          
+
+          <div style="margin-top:12px;">
+            <div class="trade-input" style="margin-bottom:8px;">
+              <label style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:4px;">止盈止损理由</label>
+              <textarea class="t-slr" rows="2" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:4px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="记录本次交易的止盈止损逻辑和执行情况">${slrPlaceholder}</textarea>
+            </div>
+            <div class="trade-input">
+              <label style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:4px;">后续评估</label>
+              <textarea class="t-fue" rows="2" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:4px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="记录后续市场走势跟踪及持仓调整情况">${fuePlaceholder}</textarea>
+            </div>
+          </div>
+
           <div class="ai-review-result" style="display: ${t.ai_review ? 'block' : 'none'}">${t.ai_review}</div>
-          
+
           <div class="trade-actions">
             <button class="btn-sm btn-ai" onclick="generateAIReview(this, '${t.id}')">✨ AI 生成复盘报告</button>
             <button class="btn-sm" style="color:#ef4444;" onclick="deleteTrade('${t.id}')">删除记录</button>

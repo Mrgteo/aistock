@@ -374,6 +374,16 @@ MACD金叉
           <span class="pill" style="border:none;background:transparent;padding:0;">加载中...</span>
         </div>
       </div>
+
+      <!-- 定制量化策略 -->
+      <div>
+        <div class="section-title">🎯 定制量化策略</div>
+        <div style="display:flex; flex-direction:column; gap:6px;" id="customStrategyList">
+          <!-- 策略卡片由JS渲染 -->
+        </div>
+        <button id="btnCustomStrategy" class="btn-primary" style="margin-top:12px;background:#6366f1;" onclick="runCustomStrategy()">▶ 执行选股</button>
+        <div class="syntax-hint" style="margin-top:8px;">基于同花顺问财，5种量化策略智能选股</div>
+      </div>
     </div>
 
     <!-- 右侧结果面板 -->
@@ -512,8 +522,10 @@ MACD金叉
           let className = '';
           let displayVal = val !== null && val !== undefined ? val : '-';
 
-          // 涨跌幅颜色
-          if (key === 'change_pct') {
+          // 涨跌幅列特殊处理：红绿颜色+百分数（包含带后缀的列名）
+          const colLower = key.toLowerCase();
+          const isChangePctCol = key.includes('涨跌幅') || key.includes('涨跌率') || colLower.includes('change_pct') || colLower.includes('changepct');
+          if (isChangePctCol) {
             const chg = parseFloat(val);
             if (!isNaN(chg)) {
               className = chg > 0 ? 'up' : (chg < 0 ? 'down' : 'neutral');
@@ -613,6 +625,239 @@ MACD金叉
 
     // 初始化
     loadHotStrategies();
+
+    // 定制量化策略配置
+    const CUSTOM_STRATEGIES = {
+      main_force: {
+        name: '主力选股',
+        icon: '💰',
+        description: '跟踪主力资金净流入，筛选大资金关注的股票',
+        conditions: ['主力资金净流入排名', '市值区间筛选', '计算区间涨跌幅', '市值范围可调'],
+        params: { top_n: 20, days_ago: 90, min_market_cap: 0, max_market_cap: 500 },
+        paramConfig: [
+          { key: 'days_ago', label: '近 N 天', default: 90 },
+          { key: 'min_market_cap', label: '最小市值(亿)', default: 0 },
+          { key: 'max_market_cap', label: '最大市值(亿)', default: 500 }
+        ]
+      },
+      low_price_bull: {
+        name: '低价擒牛',
+        icon: '🐂',
+        description: '低价 + 高成长，寻找估值洼地中的爆发股',
+        conditions: ['股价 < 10元', '净利润增长 ≥ 100%', '排除 ST/科创/创业板', '按成交额排序'],
+        params: { top_n: 5 },
+        paramConfig: [
+          { key: 'top_n', label: '返回数量', default: 5 }
+        ]
+      },
+      small_cap: {
+        name: '小市值策略',
+        icon: '🚀',
+        description: '小市值 + 高成长，挖掘未来潜力黑马',
+        conditions: ['总市值 ≤ 50亿', '营收增长 ≥ 10%', '净利润增长 ≥ 100%', '排除 ST/科创/创业'],
+        params: { top_n: 5 },
+        paramConfig: [
+          { key: 'top_n', label: '返回数量', default: 5 }
+        ]
+      },
+      profit_growth: {
+        name: '净利增长',
+        icon: '📈',
+        description: '聚焦净利润持续增长的优质企业',
+        conditions: ['净利润增长 ≥ 10%', '深圳A股', '排除 ST/科创/创业', '按成交额排序'],
+        params: { top_n: 5 },
+        paramConfig: [
+          { key: 'top_n', label: '返回数量', default: 5 }
+        ]
+      },
+      value: {
+        name: '低估值策略',
+        icon: '💎',
+        description: '价值投资，寻找被低估的优质股票',
+        conditions: ['市盈率 ≤ 20', '市净率 ≤ 1.5', '股息率 ≥ 1%', '资产负债率 ≤ 30%'],
+        params: { top_n: 10 },
+        paramConfig: [
+          { key: 'top_n', label: '返回数量', default: 10 }
+        ]
+      }
+    };
+
+    let selectedCustomStrategy = 'main_force';
+    let customStrategyParams = {};
+
+    // 加载定制策略列表
+    function loadCustomStrategies() {
+      const container = document.getElementById('customStrategyList');
+      let html = '';
+      for (const [key, s] of Object.entries(CUSTOM_STRATEGIES)) {
+        const tags = s.conditions.map(c => `<span style="background:#e2e8f0;color:#64748b;font-size:10px;padding:2px 6px;border-radius:4px;">${c}</span>`).join('');
+        html += `
+          <div class="strategy-card" id="custom-card-${key}" onclick="selectCustomStrategy('${key}')" style="padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;transition:all 0.2s;background:#f8fafc;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-size:16px;">${s.icon}</span>
+              <span style="font-size:13px;font-weight:500;color:#0f172a;">${s.name}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${tags}</div>
+            <div style="font-size:11px;color:#64748b;">${s.description}</div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+      selectCustomStrategy('main_force');
+    }
+
+    // 选择定制策略
+    function selectCustomStrategy(key) {
+      selectedCustomStrategy = key;
+      const s = CUSTOM_STRATEGIES[key];
+
+      // 更新选中状态
+      document.querySelectorAll('[id^="custom-card-"]').forEach(el => {
+        el.style.borderColor = '#e2e8f0';
+        el.style.background = '#f8fafc';
+      });
+      const card = document.getElementById('custom-card-' + key);
+      if (card) {
+        card.style.borderColor = '#6366f1';
+        card.style.background = '#eef2ff';
+      }
+
+      // 初始化参数
+      customStrategyParams = { ...s.params };
+    }
+
+    // 执行定制策略
+    async function runCustomStrategy() {
+      const strategy = CUSTOM_STRATEGIES[selectedCustomStrategy];
+      if (!strategy) return;
+
+      const thead = document.getElementById('resultThead');
+      const tbody = document.getElementById('resultTbody');
+      const count = document.getElementById('resultCount');
+      const mask = document.getElementById('loadingMask');
+
+      // 显示加载
+      thead.innerHTML = '<tr><th style="text-align:center; color:var(--text-muted);">加载中...</th></tr>';
+      tbody.innerHTML = '<tr><td style="text-align:center; padding:60px 20px; color:var(--text-muted);">正在执行选股，请稍候...</td></tr>';
+      count.textContent = '策略选股执行中...';
+      mask.style.display = 'flex';
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+      try {
+        let endpoint, body;
+
+        // 根据策略类型构建请求
+        if (selectedCustomStrategy === 'main_force') {
+          endpoint = '/api/custom_strategy/main_force';
+          body = {
+            days_ago: parseInt(customStrategyParams.days_ago || 90),
+            min_market_cap: parseFloat(customStrategyParams.min_market_cap || 0),
+            max_market_cap: parseFloat(customStrategyParams.max_market_cap || 500),
+            top_n: parseInt(customStrategyParams.top_n || 20)
+          };
+        } else if (selectedCustomStrategy === 'low_price_bull') {
+          endpoint = '/api/custom_strategy/low_price_bull';
+          body = { top_n: parseInt(customStrategyParams.top_n || 5) };
+        } else if (selectedCustomStrategy === 'small_cap') {
+          endpoint = '/api/custom_strategy/small_cap';
+          body = { top_n: parseInt(customStrategyParams.top_n || 5) };
+        } else if (selectedCustomStrategy === 'profit_growth') {
+          endpoint = '/api/custom_strategy/profit_growth';
+          body = { top_n: parseInt(customStrategyParams.top_n || 5) };
+        } else if (selectedCustomStrategy === 'value') {
+          endpoint = '/api/custom_strategy/value_stock';
+          body = { top_n: parseInt(customStrategyParams.top_n || 10) };
+        }
+
+        const resp = await fetch(`${API_BASE}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const data = await resp.json();
+
+        if (!data.success) {
+          thead.innerHTML = '<tr><th style="text-align:center; color:var(--danger);">选股失败</th></tr>';
+          tbody.innerHTML = `<tr><td style="text-align:center; padding:40px; color:var(--danger);">${data.error || data.message || '未知错误'}</td></tr>`;
+          count.textContent = '选股失败';
+          return;
+        }
+
+        // 渲染结果
+        const stocks = data.stocks || [];
+        if (stocks.length === 0) {
+          thead.innerHTML = '<tr><th style="text-align:center;">未匹配到符合条件的股票</th></tr>';
+          tbody.innerHTML = '<tr><td style="text-align:center; padding:40px; color:var(--text-muted);">未找到符合条件的股票</td></tr>';
+          count.textContent = '共 0 条结果';
+          return;
+        }
+
+        // 获取列名
+        const firstRow = stocks[0];
+        const columns = Object.keys(firstRow);
+        const priorityCols = ['股票代码', '股票简称', '主力资金净流入', '区间涨跌幅', '总市值',
+          '股价', '净利润增长率', '成交额', '营收增长率', '市盈率', '市净率', '股息率',
+          '资产负债率', '流通市值', '所属同花顺行业', '所属行业'];
+        const displayCols = priorityCols.filter(c => columns.includes(c))
+          .concat(columns.filter(c => !priorityCols.includes(c)));
+
+        let thHtml = displayCols.map(col => `<th>${col}</th>`).join('');
+        let trHtml = '';
+        for (const row of stocks) {
+          trHtml += '<tr>';
+          for (const col of displayCols) {
+            let val = row[col];
+            let className = '';
+            if (val === null || val === undefined) val = '-';
+
+            // 涨跌幅列特殊处理：红绿颜色+百分数（包含带后缀的列名）
+            const colLower = col.toLowerCase();
+            const isChangePctCol = col.includes('涨跌幅') || col.includes('涨跌率') || colLower.includes('change_pct') || colLower.includes('changepct');
+            if (isChangePctCol) {
+              const chg = parseFloat(val);
+              if (!isNaN(chg)) {
+                className = chg > 0 ? 'up' : (chg < 0 ? 'down' : 'neutral');
+                val = (chg > 0 ? '+' : '') + chg.toFixed(2) + '%';
+              }
+            } else if (typeof val === 'number') {
+              // 格式化数值
+              if (Math.abs(val) >= 100000000) val = (val / 100000000).toFixed(2) + '亿';
+              else if (Math.abs(val) >= 10000) val = (val / 10000).toFixed(2) + '万';
+              else if (['市盈率', '市净率', '股息率', '资产负债率'].includes(col)) {
+                val = val.toFixed(2);
+              } else {
+                val = val.toFixed(2);
+              }
+            }
+
+            trHtml += `<td class="${className}">${val}</td>`;
+          }
+          trHtml += '</tr>';
+        }
+
+        thead.innerHTML = `<tr>${thHtml}</tr>`;
+        tbody.innerHTML = trHtml;
+        count.textContent = `${strategy.name} — 共 ${stocks.length} 条结果`;
+
+        currentData = { columns: displayCols.map(c => ({ en: c })), rows: stocks };
+
+      } catch (e) {
+        let errMsg = e.name === 'AbortError' ? '请求超时（2分钟），请稍后重试' : e.message;
+        thead.innerHTML = '<tr><th style="text-align:center; color:var(--danger);">请求失败</th></tr>';
+        tbody.innerHTML = `<tr><td style="text-align:center; padding:40px; color:var(--danger);">${errMsg}</td></tr>`;
+        count.textContent = '请求失败';
+      } finally {
+        mask.style.display = 'none';
+      }
+    }
+
+    // 初始化定制策略列表
+    loadCustomStrategies();
   </script>
 </body>
 </html>

@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🎯 定制量化策略</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --active-bg: #eef2ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 左侧导航 */
+    .left-nav {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      overflow-y: auto;
+    }
+    .nav-section-title {
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .nav-item {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: #f8fafc; color: var(--text-main); }
+    .nav-item.active { background: var(--active-bg); color: var(--primary); border-left-color: var(--primary); }
+    .nav-item .icon { font-size: 18px; }
+    .nav-item .count {
+      margin-left: auto;
+      background: var(--primary);
+      color: white;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* 右侧内容区 */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .page-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .page-header h2 { font-size: 16px; font-weight: 600; }
+    .page-header .desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .page-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    /* 策略卡片 */
+    .strategy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .strategy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .strategy-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(99,102,241,0.1);
+    }
+    .strategy-card.selected {
+      border-color: var(--primary);
+      background: var(--active-bg);
+    }
+    .strategy-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .strategy-card-icon { font-size: 28px; }
+    .strategy-card-title { font-size: 16px; font-weight: 600; }
+    .strategy-card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+    .strategy-card-conditions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .condition-tag {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* 策略详情面板 */
+    .strategy-detail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .strategy-detail-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+    }
+    .strategy-detail-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .strategy-detail-title .icon { font-size: 22px; }
+
+    /* 参数设置 */
+    .params-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .param-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+    .param-input {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      width: 80px;
+      outline: none;
+    }
+    .param-input:focus { border-color: var(--primary); }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #f8fafc; }
+
+    /* 结果区域 */
+    .results-area {
+      padding: 16px 20px;
+    }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .results-title { font-size: 14px; font-weight: 500; }
+    .results-count { font-size: 13px; color: var(--text-muted); }
+
+    /* 股票表格 */
+    .stock-table-wrap { overflow-x: auto; }
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .stock-table th {
+      background: #f8fafc;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .stock-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .stock-table tr:hover td { background: #f8fafc; }
+    .stock-table tr:last-child td { border-bottom: none; }
+
+    .stock-code {
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .stock-code:hover { text-decoration: underline; }
+
+    /* 加载状态 */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .loading::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state .msg { font-size: 14px; }
+
+    /* 错误提示 */
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin: 16px 20px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text-main);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎯 定制量化策略</h1>
+</div>
+
+<div class="main-container">
+  <!-- 左侧导航 -->
+  <div class="left-nav">
+    <div class="nav-section-title">策略选股</div>
+    <div class="nav-item active" data-tab="main_force" onclick="selectStrategy('main_force')">
+      <span class="icon">💰</span>
+      <span>主力选股</span>
+    </div>
+    <div class="nav-item" data-tab="low_price_bull" onclick="selectStrategy('low_price_bull')">
+      <span class="icon">🐂</span>
+      <span>低价擒牛</span>
+    </div>
+    <div class="nav-item" data-tab="small_cap" onclick="selectStrategy('small_cap')">
+      <span class="icon">🚀</span>
+      <span>小市值策略</span>
+    </div>
+    <div class="nav-item" data-tab="profit_growth" onclick="selectStrategy('profit_growth')">
+      <span class="icon">📈</span>
+      <span>净利增长</span>
+    </div>
+    <div class="nav-item" data-tab="value" onclick="selectStrategy('value')">
+      <span class="icon">💎</span>
+      <span>低估值策略</span>
+    </div>
+  </div>
+
+  <!-- 右侧内容 -->
+  <div class="right-panel">
+    <!-- 主策略选择区 -->
+    <div class="page-header">
+      <div>
+        <h2>选择量化策略</h2>
+        <div class="desc">基于同花顺问财数据，5种量化策略智能选股</div>
+      </div>
+      <button class="btn btn-primary" onclick="runStrategy()">▶ 运行选中策略</button>
+    </div>
+
+    <div class="page-content" id="pageContent">
+      <!-- 策略卡片概览 -->
+      <div class="strategy-grid" id="strategyGrid">
+        <!-- 由JS动态渲染 -->
+      </div>
+
+      <!-- 策略详情/结果区域 -->
+      <div id="detailArea" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/custom_strategy';
+
+// 策略配置
+const STRATEGIES = {
+  main_force: {
+    name: '主力选股',
+    icon: '💰',
+    description: '跟踪主力资金净流入，筛选大资金关注的股票',
+    conditions: ['主力资金净流入排名', '市值区间筛选', '计算区间涨跌幅', '市值范围可调'],
+    defaultParams: { top_n: 20, days_ago: 90, min_market_cap: 0, max_market_cap: 500 }
+  },
+  low_price_bull: {
+    name: '低价擒牛',
+    icon: '🐂',
+    description: '低价 + 高成长，寻找估值洼地中的爆发股',
+    conditions: ['股价 < 10元', '净利润增长 ≥ 100%', '排除 ST/科创/创业板', '按成交额排序'],
+    defaultParams: { top_n: 5 }
+  },
+  small_cap: {
+    name: '小市值策略',
+    icon: '🚀',
+    description: '小市值 + 高成长，挖掘未来潜力黑马',
+    conditions: ['总市值 ≤ 50亿', '营收增长 ≥ 10%', '净利润增长 ≥ 100%', '排除 ST/科创/创业'],
+    defaultParams: { top_n: 5 }
+  },
+  profit_growth: {
+    name: '净利增长',
+    icon: '📈',
+    description: '聚焦净利润持续增长的优质企业',
+    conditions: ['净利润增长 ≥ 10%', '深圳A股', '排除 ST/科创/创业', '按成交额排序'],
+    defaultParams: { top_n: 5 }
+  },
+  value: {
+    name: '低估值策略',
+    icon: '💎',
+    description: '价值投资，寻找被低估的优质股票',
+    conditions: ['市盈率 ≤ 20', '市净率 ≤ 1.5', '股息率 ≥ 1%', '资产负债率 ≤ 30%'],
+    defaultParams: { top_n: 10 }
+  }
+};
+
+let currentTab = 'main_force';
+let params = {};
+
+// 初始化
+async function init() {
+  renderStrategyCards();
+  // 支持 URL 参数指定默认策略
+  const params = new URLSearchParams(window.location.search);
+  const defaultStrategy = params.get('strategy') || 'main_force';
+  selectStrategy(defaultStrategy);
+}
+
+// 渲染策略卡片
+function renderStrategyCards() {
+  const grid = document.getElementById('strategyGrid');
+  let html = '';
+  for (const [key, s] of Object.entries(STRATEGIES)) {
+    const tags = s.conditions.map(c => `<span class="condition-tag">${c}</span>`).join('');
+    html += `
+      <div class="strategy-card" id="card-${key}" onclick="selectStrategy('${key}')">
+        <div class="strategy-card-header">
+          <span class="strategy-card-icon">${s.icon}</span>
+          <span class="strategy-card-title">${s.name}</span>
+        </div>
+        <div class="strategy-card-desc">${s.description}</div>
+        <div class="strategy-card-conditions">${tags}</div>
+      </div>
+    `;
+  }
+  grid.innerHTML = html;
+}
+
+// 选择策略
+function selectStrategy(tab) {
+  currentTab = tab;
+
+  // 更新导航
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+
+  // 更新卡片选中
+  document.querySelectorAll('.strategy-card').forEach(el => {
+    const key = el.id.replace('card-', '');
+    el.classList.toggle('selected', key === tab);
+  });
+
+  // 重置参数
+  params = { ...(STRATEGIES[tab]?.defaultParams || {}) };
+  renderDetailPanel(tab);
+}
+
+// 渲染单个策略详情面板
+function renderDetailPanel(tab) {
+  const s = STRATEGIES[tab];
+  if (!s) return;
+
+  const isMainForce = tab === 'main_force';
+  let paramsHtml = '';
+
+  if (isMainForce) {
+    paramsHtml = `
+      <div class="param-group">
+        <span class="param-label">近 N 天</span>
+        <input class="param-input" type="number" id="days_ago" value="${params.days_ago || 90}" min="1" max="365">
+      </div>
+      <div class="param-group">
+        <span class="param-label">最小市值(亿)</span>
+        <input class="param-input" type="number" id="min_market_cap" value="${params.min_market_cap || 0}" min="0">
+      </div>
+      <div class="param-group">
+        <span class="param-label">最大市值(亿)</span>
+        <input class="param-input" type="number" id="max_market_cap" value="${params.max_market_cap || 500}" min="0">
+      </div>
+    `;
+  } else {
+    paramsHtml = `
+      <div class="param-group">
+        <span class="param-label">返回数量</span>
+        <input class="param-input" type="number" id="top_n" value="${params.top_n || 5}" min="1" max="50">
+      </div>
+    `;
+  }
+
+  document.getElementById('detailArea').style.display = 'block';
+  document.getElementById('detailArea').innerHTML = `
+    <div class="strategy-detail">
+      <div class="strategy-detail-header">
+        <div class="strategy-detail-title">
+          <span class="icon">${s.icon}</span>
+          <span>${s.name}</span>
+          <span style="color:var(--text-muted);font-weight:400;font-size:13px">— ${s.description}</span>
+        </div>
+      </div>
+      <div class="params-bar">
+        ${paramsHtml}
+        <button class="btn btn-primary" onclick="runStrategy()">▶ 执行选股</button>
+      </div>
+      <div class="results-area" id="resultsArea">
+        <div class="empty-state">
+          <div class="icon">📊</div>
+          <div class="msg">点击"执行选股"开始筛选</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 执行单个策略
+async function runStrategy() {
+  const resultsArea = document.getElementById('resultsArea');
+  resultsArea.innerHTML = '<div class="loading">正在执行选股（数据获取可能需要30-60秒，请耐心等待）...</div>';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟超时
+
+  try {
+    let endpoint, body;
+
+    if (currentTab === 'main_force') {
+      endpoint = '/main_force';
+      body = {
+        days_ago: parseInt(document.getElementById('days_ago')?.value || 90),
+        min_market_cap: parseFloat(document.getElementById('min_market_cap')?.value || 0),
+        max_market_cap: parseFloat(document.getElementById('max_market_cap')?.value || 500),
+        top_n: parseInt(document.getElementById('top_n')?.value || 20)
+      };
+    } else {
+      endpoint = getEndpoint(currentTab);
+      body = { top_n: parseInt(document.getElementById('top_n')?.value || 5) };
+    }
+
+    const fullUrl = API_BASE + endpoint;
+    console.log('[选股] 请求URL:', fullUrl, 'body:', body);
+
+    const resp = await fetch(fullUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    console.log('[选股] 响应状态:', resp.status);
+
+    let data;
+    const contentType = resp.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await resp.json();
+      console.log('[选股] 响应数据:', JSON.stringify(data).substring(0, 200));
+    } else {
+      const text = await resp.text();
+      console.log('[选股] 非JSON响应:', text.substring(0, 200));
+      resultsArea.innerHTML = `<div class="error-msg">❌ 服务器返回异常（状态${resp.status}），请检查后端服务是否正常运行</div>`;
+      return;
+    }
+
+    if (!data.success) {
+      const errDetail = data.error || data.message || data.detail || '未知错误';
+      // 区分404和实际API错误
+      if (resp.status === 404 || errDetail === 'Not Found') {
+        resultsArea.innerHTML = `<div class="error-msg">❌ 选股失败: 接口不存在（404）<br><small>可能原因：后端未正确加载策略路由，请检查后端日志 | 或后端服务未启动</small></div>`;
+      } else {
+        resultsArea.innerHTML = `<div class="error-msg">❌ 选股失败: ${errDetail}</div>`;
+      }
+      return;
+    }
+
+    renderStocksResult(resultsArea, data);
+    showToast(`${data.strategy || currentTab} 完成，共 ${data.total || 0} 只`, 'success');
+
+  } catch (e) {
+    clearTimeout(timeoutId);
+    console.error('[选股] 请求异常:', e);
+    let errMsg = e.message;
+    if (e.name === 'AbortError') {
+      errMsg = '请求超时（2分钟），后端数据获取较慢，请稍后重试';
+    }
+    resultsArea.innerHTML = `<div class="error-msg">❌ 请求失败: ${errMsg}</div>`;
+  }
+}
+
+// 渲染股票结果表格
+function renderStocksResult(container, data) {
+  const stocks = data.stocks || [];
+  if (!stocks.length) {
+    container.innerHTML = `
+      <div class="results-header">
+        <span class="results-title">📊 筛选结果</span>
+      </div>
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <div class="msg">未找到符合条件的股票</div>
+      </div>
+    `;
+    return;
+  }
+
+  const firstRow = stocks[0];
+  const columns = Object.keys(firstRow);
+
+  // 优先显示的列
+  const priorityCols = ['股票代码', '股票简称', '主力资金净流入', '区间涨跌幅', '总市值',
+    '股价', '净利润增长率', '成交额', '营收增长率', '市盈率', '市净率', '股息率',
+    '资产负债率', '流通市值', '所属同花顺行业', '所属行业'];
+  const displayCols = priorityCols.filter(c => columns.includes(c))
+    .concat(columns.filter(c => !priorityCols.includes(c)));
+
+  let thHtml = displayCols.map(col => `<th>${col}</th>`).join('');
+  let trHtml = '';
+  for (const row of stocks) {
+    trHtml += '<tr>';
+    for (const col of displayCols) {
+      let val = row[col];
+      if (val === null || val === undefined) val = '-';
+
+      // 格式化数值
+      if (typeof val === 'number') {
+        if (Math.abs(val) >= 100000000) val = (val / 100000000).toFixed(2) + '亿';
+        else if (Math.abs(val) >= 10000) val = (val / 10000).toFixed(2) + '万';
+        else val = val.toFixed(2);
+      }
+
+      // 股票代码加链接
+      if (col === '股票代码') {
+        val = `<span class="stock-code" onclick="viewStock('${val}')">${val}</span>`;
+      }
+
+      trHtml += `<td>${val}</td>`;
+    }
+    trHtml += '</tr>';
+  }
+
+  container.innerHTML = `
+    <div class="results-header">
+      <span class="results-title">📊 ${data.strategy || currentTab} — 筛选结果</span>
+      <span class="results-count">共 ${stocks.length} 只</span>
+    </div>
+    <div class="stock-table-wrap">
+      <table class="stock-table">
+        <thead><tr>${thHtml}</tr></thead>
+        <tbody>${trHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// 获取端点映射
+function getEndpoint(tab) {
+  const map = {
+    low_price_bull: '/low_price_bull',
+    small_cap: '/small_cap',
+    profit_growth: '/profit_growth',
+    value: '/value_stock'
+  };
+  return map[tab] || '/' + tab;
+}
+
+// 查看股票详情
+function viewStock(code) {
+  // 清理代码
+  code = code.toString().replace(/\.0+$/, '').split('.')[0];
+  window.open(`/analyze.html?code=${code}`, '_blank');
+}
+
+// Toast提示
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => { toast.className = 'toast'; }, 3000);
+}
+
+// 启动
+init();
+</script>
+
+</body>
+</html>
