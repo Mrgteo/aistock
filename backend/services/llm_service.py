@@ -278,11 +278,14 @@ class LLMService:
 
     def news_analysis(self, stock_info: Dict, news_data: str = None) -> str:
         """新闻分析"""
+        import datetime
         news_section = news_data if news_data else "暂无新闻数据"
+        current_date = datetime.datetime.now().strftime("%Y年%m月%d日")
 
         prompt = f"""
 你是一名新闻舆情分析师。请基于以下新闻进行分析：
 
+报告日期：{current_date}
 股票信息：
 - 股票代码：{stock_info.get('symbol', 'N/A')}
 - 股票名称：{stock_info.get('name', 'N/A')}
@@ -296,14 +299,25 @@ class LLMService:
 3. 投资注意事项
 
 请给出专业的新闻舆情分析报告。
+重要提示：
+- 不要使用 # 或 ## 等markdown标题符号
+- 使用中文数字标题如"一、"或直接以自然段落形式呈现
+- 不要在输出中包含 #### 符号
 """
 
         messages = [
-            {"role": "system", "content": "你是一名专业的新闻舆情分析师。"},
+            {"role": "system", "content": "你是一名专业的新闻舆情分析师。输出时不要使用#符号作为标题。"},
             {"role": "user", "content": prompt}
         ]
 
-        return self.call_api(messages, max_tokens=3000)
+        result = self.call_api(messages, max_tokens=3000)
+
+        # 替换AI生成的回答中的错误日期为正确日期
+        import re
+        # 匹配类似 "2023年10月27日" 或 "2024年01月15日" 等格式的日期
+        result = re.sub(r'\d{4}年\d{1,2}月\d{1,2}日', current_date, result)
+
+        return result
 
     def team_discussion(self, agents_results: Dict, stock_info: Dict, indicators: Dict = None) -> str:
         """团队讨论 - 综合各分析师观点进行讨论"""
@@ -641,11 +655,14 @@ class LLMService:
 
     async def news_analysis_async(self, stock_info: Dict, news_data: str = None) -> str:
         """新闻分析（异步版本）"""
+        import datetime
         news_section = news_data if news_data else "暂无新闻数据"
+        current_date = datetime.datetime.now().strftime("%Y年%m月%d日")
 
         prompt = f"""
 你是一名新闻舆情分析师。请基于以下新闻进行分析：
 
+报告日期：{current_date}
 股票信息：
 - 股票代码：{stock_info.get('symbol', 'N/A')}
 - 股票名称：{stock_info.get('name', 'N/A')}
@@ -659,14 +676,24 @@ class LLMService:
 3. 投资注意事项
 
 请给出专业的新闻舆情分析报告。
+重要提示：
+- 不要使用 # 或 ## 等markdown标题符号
+- 使用中文数字标题如"一、"或直接以自然段落形式呈现
+- 不要在输出中包含 #### 符号
 """
 
         messages = [
-            {"role": "system", "content": "你是一名专业的新闻舆情分析师。"},
+            {"role": "system", "content": "你是一名专业的新闻舆情分析师。输出时不要使用#符号作为标题。"},
             {"role": "user", "content": prompt}
         ]
 
-        return await self.call_api_async(messages, max_tokens=3000)
+        result = await self.call_api_async(messages, max_tokens=3000)
+
+        # 替换AI生成的回答中的错误日期为正确日期
+        import re
+        result = re.sub(r'\d{4}年\d{1,2}月\d{1,2}日', current_date, result)
+
+        return result
 
     async def team_discussion_async(self, agents_results: Dict, stock_info: Dict, indicators: Dict = None) -> str:
         """团队讨论（异步版本）"""

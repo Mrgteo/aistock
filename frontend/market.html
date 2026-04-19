@@ -681,6 +681,14 @@
       padding-bottom: 6px;
       border-bottom: 1px solid var(--border);
     }
+    .analysis-subsection-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin: 12px 0 6px 0;
+      padding-left: 8px;
+      border-left: 3px solid var(--primary);
+    }
     .analysis-section-content {
       font-size: 13px;
       color: var(--text-main);
@@ -721,6 +729,26 @@
       font-size: 11px;
       color: var(--text-muted);
       line-height: 1.6;
+    }
+    .ai-result-footer {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .btn-reset {
+      background: var(--surface);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover {
+      background: var(--primary);
+      color: white;
     }
   </style>
 </head>
@@ -885,6 +913,15 @@
 
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById('tab-' + tabName).classList.add('active');
+
+      // AI助手只在市场快讯显示
+      const aiToggle = document.getElementById('aiAssistantToggle');
+      if (tabName === 'indices') {
+        closeAiPanel();
+        if (aiToggle) aiToggle.style.display = 'none';
+      } else {
+        if (aiToggle) aiToggle.style.display = 'flex';
+      }
 
       if (tabName === 'news') {
         startNewsRefresh();
@@ -1765,6 +1802,12 @@
       }
     }
 
+    function closeAiPanel() {
+      if (aiPanelOpen) {
+        toggleAiPanel();
+      }
+    }
+
     // 初始化AI面板为收起状态
     function initAiPanel() {
       const panel = document.getElementById('aiAssistantPanel');
@@ -1937,10 +1980,17 @@
 
         if (data.success) {
           const beautifiedContent = beautifyMarkdown(data.analysis);
-          resultDiv.innerHTML = beautifiedContent;
+          resultDiv.innerHTML = beautifiedContent + `
+            <div class="ai-result-footer">
+              <button class="btn-reset" onclick="resetAiForNewAnalysis()">分析另一条新闻</button>
+            </div>
+          `;
         } else {
           resultDiv.innerHTML = `
             <div class="error">分析失败: ${data.error || '未知错误'}</div>
+            <div class="ai-result-footer">
+              <button class="btn-reset" onclick="resetAiForNewAnalysis()">重试</button>
+            </div>
           `;
         }
       } catch (e) {
@@ -1963,10 +2013,17 @@
       html = html.replace(/\n---\n\*\*\*\*/g, '\n');
       html = html.replace(/\n---\n+/g, '\n');
 
-      // 处理标题层级
-      html = html.replace(/^### (.+)$/gm, '<div class="analysis-section-title">$1</div>');
-      html = html.replace(/^## (.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title">$1</div>');
-      html = html.replace(/^# (.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title" style="font-size:16px;">$1</div>');
+      // 处理标题层级 #### -> 小标题样式（处理带数字的标题如"#### 1. 新闻对股价的影响"）
+      html = html.replace(/^####\s*(.+)$/gm, '<div class="analysis-subsection-title">$1</div>');
+      html = html.replace(/^###\s*(.+)$/gm, '<div class="analysis-section-title">$1</div>');
+      html = html.replace(/^##\s*(.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title">$1</div>');
+      html = html.replace(/^#\s*(.+)$/gm, '<div class="analysis-section"><div class="analysis-section-title" style="font-size:16px;">$1</div>');
+
+      // 清理所有残留的 # 符号（包括不在行首的）
+      html = html.replace(/^#+\s*/gm, '');
+      html = html.replace(/#+$/gm, '');
+      html = html.replace(/#{3,}/g, '');
+      html = html.replace(/##/g, '');
 
       // 处理加粗 **text**
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -1976,7 +2033,7 @@
 
       // 处理列表项
       html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-      html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+      html = html.replace(/^(\d+)\.\s*(.+)$/gm, '<li>$2</li>');
       html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
       // 处理段落分隔
@@ -2001,6 +2058,24 @@
 
     // 重置AI助手到初始状态
     function resetAiAssistant() {
+      const dropZone = document.getElementById('aiDropZone');
+      const preview = document.getElementById('aiNewsPreview');
+      const resultDiv = document.getElementById('aiAnalysisResult');
+
+      dropZone.style.display = 'block';
+      preview.style.display = 'none';
+      resultDiv.innerHTML = '';
+      pendingNews = null;
+
+      const btn = document.getElementById('startAnalyzeBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '开始解读';
+      }
+    }
+
+    // 重置AI助手以分析新新闻
+    function resetAiForNewAnalysis() {
       const dropZone = document.getElementById('aiDropZone');
       const preview = document.getElementById('aiNewsPreview');
       const resultDiv = document.getElementById('aiAnalysisResult');
