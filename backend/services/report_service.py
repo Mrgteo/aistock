@@ -4,27 +4,53 @@
 import os
 import uuid
 import re
+import requests
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 
 class ReportService:
     """报告处理服务类"""
 
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
+    def __init__(self, chunk_size: int = 400, chunk_overlap: int = 80,
+                 max_sentence_len: int = 200):
         """
         Args:
             chunk_size: 分块大小（字符数）
             chunk_overlap: 分块重叠大小
+            max_sentence_len: 单个句子最大长度（超过则强制分割）
         """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.max_sentence_len = max_sentence_len
 
-    def extract_text_from_pdf(self, file_data: bytes) -> Tuple[str, List[Dict]]:
+    def _is_text_quality_low(self, text: str) -> bool:
+        """检测提取的文本质量是否过低（可能是图片型PDF）"""
+        if not text:
+            return True
+        # 水印比例过高，认为是图片型PDF
+        watermark_patterns = [
+            r'国际资本市场研报资讯',
+            r'知识星球',
+            r'清新研究团队',
+            r'三个皮匠报告站',
+        ]
+        watermark_count = 0
+        for pattern in watermark_patterns:
+            import re
+            watermark_count += len(re.findall(pattern, text))
+        # 如果水印出现次数超过10次，或者水印字符占总字符比例超过50%，认为质量低
+        total_chars = len(text)
+        if watermark_count >= 10 or (watermark_count > 0 and watermark_count / total_chars > 0.5):
+            return True
+        return False
+
+    def extract_text_from_pdf(self, file_data: bytes, filename: str = "document.pdf") -> Tuple[str, List[Dict]]:
         """
-        从PDF提取文本
+        从PDF提取文本（优先pdfplumber，质量低时使用PaddleOCR）
 
         Args:
             file_data: PDF二进制数据
+            filename: 文件名（用于PaddleOCR）
 
         Returns:
             (完整文本, 每页文本列表)
@@ -47,10 +73,36 @@ class ReportService:
                             "text": text
                         })
 
-            return "\n\n".join(full_text), pages_text
+            combined_text = "\n\n".join(full_text)
+
+            # 如果提取的文本质量过低（大部分是水印），使用PaddleOCR（图片型PDF）
+            if self._is_text_quality_low(combined_text):
+                print(f"[ReportService] PDF文本质量过低，尝试使用PaddleOCR...")
+                try:
+                    from backend.services.paddleocr_service import get_paddleocr_service
+                    paddleocr = get_paddleocr_service()
+                    paddle_text, paddle_pages = paddleocr.extract_text_from_pdf(file_data, filename)
+                    if paddle_text and len(paddle_text) > len(combined_text):
+                        print(f"[ReportService] PaddleOCR提取成功: {len(paddle_text)} 字符")
+                        return paddle_text, paddle_pages
+                    else:
+                        print(f"[ReportService] PaddleOCR提取结果不如当前，保留当前结果")
+                except Exception as e:
+                    print(f"[ReportService] PaddleOCR调用失败: {e}")
+
+            return combined_text, pages_text
 
         except Exception as e:
             print(f"[ReportService] PDF解析失败: {e}")
+            # pdfplumber失败时尝试PaddleOCR
+            try:
+                print("[ReportService] 尝试使用PaddleOCR...")
+                from backend.services.paddleocr_service import get_paddleocr_service
+                paddleocr = get_paddleocr_service()
+                full_text, pages_text = paddleocr.extract_text_from_pdf(file_data, filename)
+                return "\n\n".join(full_text), pages_text
+            except Exception as pe:
+                print(f"[ReportService] PaddleOCR也失败: {pe}")
             return "", []
 
     def extract_text_from_docx(self, file_data: bytes) -> str:
@@ -106,7 +158,7 @@ class ReportService:
         ext = filename.lower().split('.')[-1]
 
         if ext == 'pdf':
-            return self.extract_text_from_pdf(file_data)
+            return self.extract_text_from_pdf(file_data, filename)
         elif ext in ['docx', 'doc']:
             text = self.extract_text_from_docx(file_data)
             return text, [{"page": 1, "text": text}]
@@ -175,14 +227,26 @@ class ReportService:
 
     def _split_long_text(self, text: str, page_start: int,
                          base_metadata: Dict) -> List[Dict]:
-        """将长文本分割成重叠的块"""
+        """
+        将长文本分割成重叠的块（语义分块改进）
+
+        改进点：
+        1. 按段落分块，优先保持段落完整性
+        2. 小于 chunk_size 的段落直接保留
+        3. 大段落使用语义分块
+        """
         chunks = []
 
-        # 按段落分割
-        paragraphs = re.split(r'\n\s*\n', text)
+        # 多种段落分割方式
+        # 1. 优先使用双换行（段落分隔）
+        # 2. 其次使用单换行
+        # 3. 最后按句子长度自动判断
+
+        # 按段落分割（支持多种换行格式）
+        paragraphs = re.split(r'\n\s*\n|\n{2,}', text)
+
         current_chunk = []
         current_length = 0
-        current_page = page_start
 
         for para in paragraphs:
             para = para.strip()
@@ -191,121 +255,187 @@ class ReportService:
 
             para_len = len(para)
 
-            # 如果单个段落超过chunk_size，需要进一步分割
-            if para_len > self.chunk_size:
+            # 方案1：段落较小，直接作为一块（保持语义完整）
+            if para_len <= self.chunk_size:
+                # 检查是否需要保存当前块
+                if current_length + para_len + 2 > self.chunk_size:
+                    # 保存当前块
+                    if current_chunk:
+                        chunk_text = "\n\n".join(current_chunk)
+                        if chunk_text.strip():
+                            chunks.append({
+                                "chunk_id": str(uuid.uuid4()),
+                                "text": chunk_text,
+                                "page": page_start,
+                                "metadata": base_metadata.copy()
+                            })
+
+                    # 开始新块，保留重叠
+                    overlap = current_chunk[-1][-self.chunk_overlap:] if current_chunk else ""
+                    current_chunk = [overlap, para] if overlap else [para]
+                    current_length = sum(len(p) for p in current_chunk) + len(current_chunk) - 1
+                else:
+                    current_chunk.append(para)
+                    current_length += para_len + 2
+
+            # 方案2：段落较大，使用语义分块
+            else:
                 # 先保存当前块
                 if current_chunk:
                     chunk_text = "\n\n".join(current_chunk)
-                    chunks.append({
-                        "chunk_id": str(uuid.uuid4()),
-                        "text": chunk_text,
-                        "page": current_page,
-                        "metadata": base_metadata.copy()
-                    })
-                    # 处理重叠
-                    overlap_text = current_chunk[-1] if current_chunk else ""
-                    current_chunk = [overlap_text] if overlap_text else []
-                    current_length = len(overlap_text)
+                    if chunk_text.strip():
+                        chunks.append({
+                            "chunk_id": str(uuid.uuid4()),
+                            "text": chunk_text,
+                            "page": page_start,
+                            "metadata": base_metadata.copy()
+                        })
+                    current_chunk = []
+                    current_length = 0
 
-                # 分割长段落
-                sub_chunks = self._split_paragraph(para, current_page, base_metadata)
-                chunks.extend(sub_chunks[:-1])  # 最后一个保留给后续
-
-                # 用最后一个子块继续
-                if sub_chunks:
-                    current_chunk = [sub_chunks[-1]["text"]]
-                    current_length = len(sub_chunks[-1]["text"])
-
-            elif current_length + para_len + 2 > self.chunk_size:
-                # 当前块已满，保存并开始新块
-                chunk_text = "\n\n".join(current_chunk)
-                chunks.append({
-                    "chunk_id": str(uuid.uuid4()),
-                    "text": chunk_text,
-                    "page": current_page,
-                    "metadata": base_metadata.copy()
-                })
-
-                # 处理重叠 - 保留最后一段作为新块开头
-                overlap_text = current_chunk[-1] if current_chunk else ""
-                current_chunk = [overlap_text] if overlap_text else []
-                current_length = len(overlap_text)
-
-                # 添加当前段落
-                current_chunk.append(para)
-                current_length += para_len + 2
-            else:
-                # 添加到当前块
-                current_chunk.append(para)
-                current_length += para_len + 2
+                # 使用语义分块处理大段落
+                sub_chunks = self._split_paragraph(para, page_start, base_metadata)
+                chunks.extend(sub_chunks)
 
         # 保存最后一块
         if current_chunk:
             chunk_text = "\n\n".join(current_chunk)
-            chunks.append({
-                "chunk_id": str(uuid.uuid4()),
-                "text": chunk_text,
-                "page": current_page,
-                "metadata": base_metadata.copy()
-            })
+            if chunk_text.strip():
+                chunks.append({
+                    "chunk_id": str(uuid.uuid4()),
+                    "text": chunk_text,
+                    "page": page_start,
+                    "metadata": base_metadata.copy()
+                })
 
         return chunks
 
     def _split_paragraph(self, para: str, page: int,
                          metadata: Dict, max_chars: int = None) -> List[Dict]:
-        """将长段落分割成较小的块"""
+        """
+        将长段落分割成较小的块（语义分块）
+
+        改进点：
+        1. 使用多种句子边界分隔符（中文全角+英文半角）
+        2. 限制单句最大长度，避免超长句子影响分块
+        3. 优先保证句子完整性，实在超出才截断
+        """
         max_chars = max_chars or self.chunk_size
         chunks = []
 
-        # 按句子分割
-        sentences = re.split(r'([。！？；\n])', para)
+        # 多种分隔符模式（优先级从高到低）
+        # 完整句子分隔：。！？!?
+        # 半句子分隔：；；
+        sentence_delimiters = r'([。！？!?]+)'
+
+        # 先按完整句子分割
+        parts = re.split(sentence_delimiters, para)
+
+        # 重新组合句子（句子+标点）
+        sentences = []
+        for i in range(0, len(parts) - 1, 2):
+            sentence = parts[i]
+            if i + 1 < len(parts):
+                sentence += parts[i + 1]  # 加上标点
+            sentence = sentence.strip()
+            if sentence:
+                sentences.append(sentence)
+
+        # 处理剩余的未分割部分（不含标点）
+        if len(parts) % 2 == 1 and parts[-1].strip():
+            last_part = parts[-1].strip()
+            if last_part:
+                # 尝试进一步分割（按半句分隔符）
+                sub_parts = re.split(r'([；;])', last_part)
+                for sp in sub_parts:
+                    sp = sp.strip()
+                    if sp:
+                        sentences.append(sp)
+
         current_chunk = []
         current_length = 0
 
-        for i in range(0, len(sentences) - 1, 2):
-            sentence = sentences[i]
-            if i + 1 < len(sentences):
-                sentence += sentences[i + 1]  # 加上标点
-
+        for sentence in sentences:
             sentence = sentence.strip()
             if not sentence:
                 continue
 
-            if current_length + len(sentence) > max_chars:
-                # 保存当前块
+            sentence_len = len(sentence)
+
+            # 超长句子处理：强制分割
+            if sentence_len > self.max_sentence_len:
+                # 先保存当前块
                 if current_chunk:
+                    chunk_text = "".join(current_chunk)
                     chunks.append({
                         "chunk_id": str(uuid.uuid4()),
-                        "text": "".join(current_chunk),
+                        "text": chunk_text,
                         "page": page,
                         "metadata": metadata.copy()
                     })
-                    # 重叠最后一句
+                    # 重叠：保留最后一个句子作为开头
                     overlap = current_chunk[-1][-self.chunk_overlap:] if current_chunk else ""
-                    current_chunk = [overlap + sentence]
-                    current_length = len(overlap) + len(sentence)
+                    current_chunk = [overlap]
+                    current_length = len(overlap)
                 else:
-                    # 句子本身太长，直接截断
-                    chunks.append({
-                        "chunk_id": str(uuid.uuid4()),
-                        "text": sentence[:max_chars],
-                        "page": page,
-                        "metadata": metadata.copy()
-                    })
                     current_chunk = []
                     current_length = 0
+
+                # 强制分割超长句子
+                while sentence_len > self.max_sentence_len:
+                    sub_sentence = sentence[:self.max_sentence_len]
+                    chunks.append({
+                        "chunk_id": str(uuid.uuid4()),
+                        "text": sub_sentence,
+                        "page": page,
+                        "metadata": metadata.copy()
+                    })
+                    sentence = sentence[self.max_sentence_len:]
+                    sentence_len = len(sentence)
+
+                if sentence:
+                    current_chunk = [sentence]
+                    current_length = len(sentence)
+                continue
+
+            # 检查是否需要保存当前块并开始新块
+            if current_length + sentence_len > max_chars:
+                # 保存当前块
+                if current_chunk:
+                    chunk_text = "".join(current_chunk)
+                    chunks.append({
+                        "chunk_id": str(uuid.uuid4()),
+                        "text": chunk_text,
+                        "page": page,
+                        "metadata": metadata.copy()
+                    })
+
+                    # 重叠处理：保留最后一个句子（作为新块的开头）
+                    overlap = current_chunk[-1][-self.chunk_overlap:] if current_chunk else ""
+                    if overlap:
+                        current_chunk = [overlap, sentence]
+                        current_length = len(overlap) + sentence_len
+                    else:
+                        current_chunk = [sentence]
+                        current_length = sentence_len
+                else:
+                    # 当前块为空，直接添加
+                    current_chunk = [sentence]
+                    current_length = sentence_len
             else:
                 current_chunk.append(sentence)
-                current_length += len(sentence)
+                current_length += sentence_len
 
-        # 最后一个块
+        # 保存最后一块
         if current_chunk:
-            chunks.append({
-                "chunk_id": str(uuid.uuid4()),
-                "text": "".join(current_chunk),
-                "page": page,
-                "metadata": metadata.copy()
-            })
+            chunk_text = "".join(current_chunk)
+            if chunk_text:  # 确保不为空
+                chunks.append({
+                    "chunk_id": str(uuid.uuid4()),
+                    "text": chunk_text,
+                    "page": page,
+                    "metadata": metadata.copy()
+                })
 
         return chunks
 
@@ -322,6 +452,39 @@ class ReportService:
         text = re.sub(r'[^\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef\u0020-\u007Ea-zA-Z0-9，。、！？；：""''（）【】《》\-\.\,\!\?\;\:\'\"\(\)\[\]\n ]', '', text)
 
         return text.strip()
+
+    def get_stock_name_from_api(self, code: str) -> Optional[str]:
+        """
+        通过Sina API获取股票名称（当本地字典没有时）
+
+        Args:
+            code: 6位股票代码
+
+        Returns:
+            股票名称或None
+        """
+        try:
+            # 判断市场
+            if code.startswith(("600", "601", "603", "605", "688")):
+                sina_code = f"sh{code}"
+            else:
+                sina_code = f"sz{code}"
+
+            headers = {"Referer": "http://finance.sina.com.cn", "User-Agent": "Mozilla/5.0"}
+            res = requests.get(f"https://hq.sinajs.cn/list={sina_code}", headers=headers, timeout=5)
+
+            if res.status_code == 200 and res.text:
+                match = re.search(r'"([^"]+)"', res.text)
+                if match:
+                    parts = match.group(1).split(',')
+                    if len(parts) > 0:
+                        name = parts[0]
+                        # 排除无效名称
+                        if name and not name.startswith("股票") and name != "":
+                            return name
+        except Exception as e:
+            print(f"[ReportService] 获取股票名称失败 {code}: {e}")
+        return None
 
     def extract_stocks_mentioned(self, text: str) -> List[Dict]:
         """
@@ -468,9 +631,16 @@ class ReportService:
         # 构建结果
         results = []
         for code, data in stock_sentiments.items():
+            # 优先用本地字典，找不到则调用API获取
+            name = stock_names.get(code)
+            if not name:
+                name = self.get_stock_name_from_api(code)
+            if not name:
+                name = f"股票{code}"
+
             results.append({
                 "code": code,
-                "name": stock_names.get(code, f"股票{code}"),
+                "name": name,
                 "mentions": data["count"],
                 "sentiment": data["sentiment"]
             })

@@ -14,8 +14,11 @@ class RerankService:
 
         # 设置DashScope API key（DashScope SDK需要全局设置）
         if self.api_key:
-            import dashscope
-            dashscope.api_key = self.api_key
+            try:
+                import dashscope
+                dashscope.api_key = self.api_key
+            except ImportError:
+                print("[Rerank] dashscope未安装，将使用后备排序方案")
 
     def rerank(self, query: str, documents: List[str], top_n: int = 5) -> List[Dict]:
         """

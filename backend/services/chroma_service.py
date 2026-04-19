@@ -6,7 +6,6 @@ import os
 import json
 from typing import Optional, List, Dict, Any
 import chromadb
-from chromadb.config import Settings
 
 class ChromaService:
     """Chroma向量数据库服务类"""
@@ -23,11 +22,9 @@ class ChromaService:
             # 确保目录存在
             os.makedirs(self.persist_directory, exist_ok=True)
 
-            self._client = chromadb.Client(Settings(
-                persist_directory=self.persist_directory,
-                anonymized_telemetry=False,
-                allow_reset=True
-            ))
+            self._client = chromadb.PersistentClient(
+                path=self.persist_directory
+            )
             print(f"[Chroma] 已连接到 {self.persist_directory}")
 
         # 初始化集合
@@ -134,14 +131,20 @@ class ChromaService:
             texts.append(v["text"])
             embeddings.append(v["embedding"])
 
-            # 构建元数据
+            # 构建元数据（只包含Chroma支持的简单类型）
             meta = {
-                "report_id": v.get("report_id", ""),
-                "page": v.get("page", 0),
-                "chunk_index": v.get("chunk_index", 0)
+                "report_id": str(v.get("report_id", "")),
+                "page": int(v.get("page", 0)),
+                "chunk_index": int(v.get("chunk_index", 0))
             }
             if v.get("metadata"):
-                meta.update(v["metadata"])
+                for k, val in v["metadata"].items():
+                    # Chroma只支持str, int, float, bool类型
+                    if isinstance(val, (str, int, float, bool)) and val:
+                        meta[k] = val
+                    elif isinstance(val, list) and len(val) > 0:
+                        # 列表类型转成逗号分隔的字符串
+                        meta[k] = ",".join(str(x) for x in val[:10])
             metadatas.append(meta)
 
         # 插入数据

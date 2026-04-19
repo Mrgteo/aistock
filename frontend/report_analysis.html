@@ -18,11 +18,14 @@
       --active-bg: #eff6ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text-main);
-      min-height: 100vh;
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
       display: flex;
       flex-direction: column;
     }
@@ -75,7 +78,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
       background: var(--surface);
     }
 
@@ -392,11 +395,81 @@
       border-radius: 3px;
       font-size: 10px;
     }
+    .kb-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .kb-status.indexed { background: #d1fae5; color: #065f46; }
+    .kb-status.processing { background: #fef3c7; color: #92400e; }
+    .kb-status.uploaded, .kb-status.failed { background: #fee2e2; color: #991b1b; }
+
+    /* 知识库查看器Modal */
+    .kb-viewer-modal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .kb-viewer-modal .viewer-content {
+      width: 90%; height: 85%; max-width: 1200px;
+      background: white; border-radius: 12px; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .kb-viewer-modal .viewer-header {
+      padding: 16px 20px; border-bottom: 1px solid #e2e8f0;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f8fafc;
+    }
+    .kb-viewer-modal .viewer-header h3 { font-size: 15px; font-weight: 600; }
+    .kb-viewer-modal .viewer-header .close-btn {
+      width: 32px; height: 32px; border-radius: 6px; border: none;
+      background: #fee2e2; color: #dc2626; cursor: pointer; font-size: 18px;
+    }
+    .kb-viewer-modal .viewer-body {
+      flex: 1; display: flex; overflow: hidden; min-height: 0;
+    }
+    .kb-viewer-modal .viewer-left, .kb-viewer-modal .viewer-right {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%;
+    }
+    .kb-viewer-modal .viewer-left { border-right: 1px solid #e2e8f0; }
+    .kb-viewer-modal .viewer-panel-header {
+      padding: 10px 16px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0;
+      font-size: 12px; font-weight: 600; color: #64748b;
+    }
+    .kb-viewer-modal .viewer-panel-content {
+      flex: 1; overflow-y: auto; padding: 16px;
+    }
+    .kb-viewer-modal .viewer-left .viewer-panel-content {
+      padding: 0;
+      font-size: 13px; line-height: 1.8; white-space: pre-wrap;
+      background: #fafafa; overflow: hidden;
+    }
+    .kb-viewer-modal .chunk-item {
+      padding: 12px; background: white; border: 1px solid #e2e8f0;
+      border-radius: 6px; margin-bottom: 10px;
+    }
+    .kb-viewer-modal .chunk-item .chunk-meta {
+      font-size: 11px; color: #94a3b8; margin-bottom: 6px;
+    }
+    .kb-viewer-modal .chunk-item .chunk-text {
+      font-size: 13px; color: #334155; line-height: 1.6;
+    }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    /* QA页面滚动条样式 */
+    #qaChatList::-webkit-scrollbar,
+    #qaMessages::-webkit-scrollbar { width: 6px; }
+    #qaChatList::-webkit-scrollbar-track,
+    #qaMessages::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    #qaChatList::-webkit-scrollbar-thumb,
+    #qaMessages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    #qaChatList::-webkit-scrollbar-thumb:hover,
+    #qaMessages::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     /* 返回顶部按钮 */
     .back-to-top-btn {
@@ -418,6 +491,128 @@
       background: var(--primary-hover);
       transform: translateY(-2px);
     }
+
+    /* 问答样式 */
+    .qa-reference-item {
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid #2563eb;
+    }
+    .qa-reference-item:last-child { margin-bottom: 0; }
+    .qa-reference-item .ref-title { font-size: 13px; font-weight: 500; color: #1e40af; margin-bottom: 4px; }
+    .qa-reference-item .ref-content { font-size: 12px; color: #64748b; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .qa-reference-item .ref-meta { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    .qa-answer-text { line-height: 1.8; }
+    .qa-answer-text p { margin-bottom: 12px; }
+    .qa-chat-bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .qa-chat-bubble.user {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+    .qa-chat-bubble.ai {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    .qa-history-item {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .qa-history-item:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+    }
+    .qa-history-item .q { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .qa-history-item .time { font-size: 11px; color: #94a3b8; }
+
+    /* 聊天消息样式 */
+    .chat-container { display: flex; flex-direction: column; gap: 16px; }
+    .chat-message { display: flex; gap: 12px; align-items: flex-start; }
+    .chat-message.user { flex-direction: row-reverse; }
+    .chat-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .chat-message.ai .chat-avatar { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .chat-message.user .chat-avatar { background: #fef3c7; border: 1px solid #fcd34d; }
+    .chat-bubble {
+      max-width: 70%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.7;
+    }
+    .chat-message.ai .chat-bubble { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 4px 12px 12px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .chat-message.user .chat-bubble { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 12px 4px 12px 12px; box-shadow: 0 1px 4px rgba(37,99,235,0.3); margin-left: auto; }
+    .chat-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .chat-message.user .chat-content { align-items: flex-end; }
+    .chat-time { font-size: 11px; color: #94a3b8; margin-top: 4px; padding: 0 4px; }
+    .chat-message.user .chat-time { color: #93c5fd; }
+    .chat-loading { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 13px; padding: 8px 0; }
+    .chat-ref-item {
+      padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+      margin-bottom: 6px; transition: all 0.2s; cursor: pointer;
+    }
+    .chat-ref-item:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .chat-ref-item:last-child { margin-bottom: 0; }
+    .chat-ref-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .chat-ref-title { font-size: 12px; font-weight: 500; color: #1e40af; flex: 1; }
+    .chat-ref-score { font-size: 10px; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 10px; }
+    .chat-ref-content {
+      font-size: 11px; color: #475569; line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; transition: max-height 0.2s;
+    }
+    .chat-ref-content.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; max-height: none; }
+    .chat-ref-footer { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+    .chat-ref-chunk-id { font-family: monospace; }
+    /* AI回复内的参考资料折叠 - 使用max-height过渡防止位移 */
+    .chat-refs-toggle {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #64748b;
+      cursor: pointer; margin-top: 8px; padding: 3px 8px; background: #f1f5f9; border-radius: 4px;
+      border: 1px solid #e2e8f0; transition: all 0.2s;
+    }
+    .chat-refs-toggle:hover { background: #e2e8f0; color: #334155; }
+    .chat-refs-list {
+      margin-top: 6px; text-align: left;
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    .chat-refs-list.expanded { max-height: 1000px; }
+    .chat-refs-list .chat-ref-item .chat-ref-content { display: block; -webkit-line-clamp: 3; overflow: visible; }
+    /* Markdown渲染样式 */
+    .chat-bubble p { margin: 0 0 8px 0; }
+    .chat-bubble p:last-child { margin-bottom: 0; }
+    .chat-bubble ul, .chat-bubble ol { margin: 0 0 8px 0; padding-left: 20px; }
+    .chat-bubble li { margin-bottom: 4px; }
+    .chat-bubble strong { font-weight: 600; }
+    .chat-bubble em { font-style: italic; }
+    .chat-bubble code { background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+    .qa-session-item {
+      padding: 10px 12px; border-radius: 6px; margin-bottom: 6px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.2s; position: relative;
+    }
+    .qa-session-item:hover { background: white; border-color: #e2e8f0; }
+    .qa-session-item.active { background: white; border-color: #2563eb; box-shadow: 0 1px 3px rgba(37,99,235,0.1); }
+    .qa-session-item .session-title { font-size: 13px; font-weight: 500; color: #0f172a; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 20px; }
+    .qa-session-item .session-time { font-size: 11px; color: #94a3b8; }
+    .qa-session-item .session-delete {
+      position: absolute; top: 8px; right: 8px; width: 18px; height: 18px;
+      border-radius: 50%; background: #ef4444; color: white; border: none;
+      font-size: 12px; line-height: 18px; text-align: center; cursor: pointer;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .qa-session-item:hover .session-delete { opacity: 1; }
+    .qa-session-item .session-delete:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -436,6 +631,10 @@
         <span class="icon">📜</span>
         <span>分析历史</span>
       </div>
+      <div class="nav-item" onclick="switchPage('qa')" id="nav-qa">
+        <span class="icon">🤖</span>
+        <span>AI研报问答</span>
+      </div>
       <div class="nav-item" onclick="switchPage('knowledge')" id="nav-knowledge">
         <span class="icon">📚</span>
         <span>知识库</span>
@@ -443,9 +642,9 @@
     </div>
 
     <!-- 右侧内容区 -->
-    <div class="right-panel">
+    <div id="right-panel" class="right-panel">
       <!-- 上传分析页面 -->
-      <div id="page-upload" class="page">
+      <div id="page-upload" class="page" style="height: 100%; overflow: auto;">
         <div class="page-header">
           <div class="page-header-left">
             <h2>上传研报并分析</h2>
@@ -477,7 +676,7 @@
       </div>
 
       <!-- 分析历史页面 -->
-      <div id="page-history" class="page" style="display:none;">
+      <div id="page-history" class="page" style="display:none; height: 100%; overflow: auto;">
         <!-- 历史列表视图 -->
         <div id="historyListView">
           <div class="page-header">
@@ -500,8 +699,50 @@
         </div>
       </div>
 
+      <!-- AI研报问答页面 - 左右两栏布局 -->
+      <div id="page-qa" class="page" style="display:none; height: 100%; overflow: hidden; flex-shrink: 0;">
+        <div style="display: flex; height: 100%; overflow: hidden; flex: 1;">
+          <!-- 左侧会话记录栏 -->
+          <div style="width: 220px; min-width: 220px; background: #f8fafc; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;">
+              <button class="btn btn-primary" onclick="createNewQAChat()" style="width: 100%;">
+                + 新建会话
+              </button>
+            </div>
+            <div id="qaChatList" style="flex: 1; overflow-y: auto; padding: 12px; min-height: 0;">
+              <!-- 会话列表由JS渲染 -->
+            </div>
+          </div>
+
+          <!-- 右侧聊天对话栏 -->
+          <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+            <!-- 聊天消息区域 -->
+            <div id="qaMessages" style="flex: 1; overflow-y: auto; padding: 20px; min-height: 0;">
+              <!-- 空状态 -->
+              <div id="qaEmptyState" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🤖</div>
+                <h3 style="font-size: 16px; color: #0f172a; margin-bottom: 8px;">AI 研报问答</h3>
+                <p style="font-size: 13px;">基于知识库向AI提问，获取智能回答</p>
+              </div>
+              <!-- 消息列表 -->
+              <div id="qaMessagesList" style="display: none;"></div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div style="padding: 16px 20px; border-top: 1px solid #e2e8f0; background: white; flex-shrink: 0;">
+              <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <textarea id="qaQuestion" rows="2" placeholder="输入问题..." style="flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; resize: none; font-family: inherit;" onkeydown="handleQAKeyDown(event)"></textarea>
+                <button class="btn btn-primary" id="qaSubmitBtn" onclick="submitQuestion()" style="padding: 10px 24px;">
+                  发送
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 知识库页面 -->
-      <div id="page-knowledge" class="page" style="display:none;">
+      <div id="page-knowledge" class="page" style="display:none; height: 100%; overflow: auto;">
         <div class="page-header">
           <div class="page-header-left">
             <h2>知识库管理</h2>
@@ -534,14 +775,401 @@
       document.querySelectorAll('.page').forEach(el => el.style.display = 'none');
 
       const pageEl = document.getElementById('page-' + page);
-      pageEl.style.display = 'flex';
-      pageEl.style.flexDirection = 'column';
+      const rightPanel = document.getElementById('right-panel');
+
+      if (page === 'qa') {
+        pageEl.style.display = 'flex';
+        pageEl.style.height = '100%';
+        if (rightPanel) rightPanel.style.overflow = 'hidden';
+      } else {
+        pageEl.style.display = 'flex';
+        pageEl.style.flexDirection = 'column';
+        if (rightPanel) {
+          rightPanel.style.overflow = 'auto';
+          rightPanel.style.height = '100%';
+        }
+      }
 
       if (page === 'history') {
         loadAnalysisHistory();
         backToHistoryList();
       }
       if (page === 'knowledge') loadKnowledge();
+      if (page === 'qa') {
+        initQAChat();
+      }
+    }
+
+    // ========== AI研报问答 ==========
+    let qaSessions = [];
+    let currentQASessionId = null;
+    let qaMessages = [];
+
+    function initQAChat() {
+      loadQASessions();
+    }
+
+    async function loadQASessions() {
+      try {
+        const res = await fetch(`${API_BASE}/api/report/qa/sessions`);
+        const data = await res.json();
+        if (data.success && data.sessions) {
+          qaSessions = data.sessions.map(s => ({
+            id: s.session_id,
+            session_id: s.session_id,
+            title: s.title,
+            time: s.updated_at ? new Date(s.updated_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
+            messages: s.messages || []
+          }));
+        } else {
+          qaSessions = [];
+        }
+      } catch (e) {
+        console.error('加载会话失败:', e);
+        qaSessions = [];
+      }
+      renderQASessions();
+    }
+
+    async function saveQASessionToServer(session) {
+      try {
+        await fetch(`${API_BASE}/api/report/qa/sessions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: session.id || session.session_id,
+            title: session.title,
+            messages: session.messages,
+            updated_at: new Date().toISOString()
+          })
+        });
+      } catch (e) {
+        console.error('保存会话失败:', e);
+      }
+    }
+
+    function createNewQAChat() {
+      const session = {
+        id: Date.now().toString(),
+        title: '新会话',
+        time: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        messages: []
+      };
+      qaSessions.unshift(session);
+      saveQASessionToServer(session);
+      renderQASessions();
+      selectQASession(session.id);
+    }
+
+    function renderQASessions() {
+      const container = document.getElementById('qaChatList');
+      if (!container) return;
+
+      if (qaSessions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px;">暂无会话记录</div>';
+        return;
+      }
+
+      container.innerHTML = qaSessions.map(s => `
+        <div class="qa-session-item ${s.id === currentQASessionId || s.session_id === currentQASessionId ? 'active' : ''}" onclick="selectQASession('${s.id || s.session_id}')">
+          <button class="session-delete" onclick="event.stopPropagation(); deleteQASession('${s.id || s.session_id}')">×</button>
+          <div class="session-title">${escapeHtml(s.title)}</div>
+          <div class="session-time">${s.time}</div>
+        </div>
+      `).join('');
+    }
+
+    async function deleteQASession(id) {
+      try {
+        await fetch(`${API_BASE}/api/report/qa/sessions/${id}`, { method: 'DELETE' });
+      } catch (e) {
+        console.error('删除会话失败:', e);
+      }
+      qaSessions = qaSessions.filter(s => (s.id || s.session_id) !== id);
+      if (currentQASessionId === id) {
+        currentQASessionId = qaSessions.length > 0 ? (qaSessions[0].id || qaSessions[0].session_id) : null;
+        qaMessages = [];
+        if (currentQASessionId) {
+          const session = qaSessions.find(s => (s.id || s.session_id) === currentQASessionId);
+          qaMessages = session ? session.messages || [] : [];
+        }
+      }
+      renderQASessions();
+      renderQAMessages();
+      document.getElementById('qaEmptyState').style.display = qaMessages.length === 0 ? 'flex' : 'none';
+      document.getElementById('qaMessagesList').style.display = qaMessages.length > 0 ? 'block' : 'none';
+    }
+
+    async function selectQASession(id) {
+      currentQASessionId = id;
+      const session = qaSessions.find(s => (s.id || s.session_id) === id);
+      if (!session) return;
+
+      qaMessages = session.messages || [];
+      renderQAMessages();
+      renderQASessions();
+
+      document.getElementById('qaEmptyState').style.display = qaMessages.length === 0 ? 'flex' : 'none';
+      document.getElementById('qaMessagesList').style.display = qaMessages.length > 0 ? 'block' : 'none';
+    }
+
+    function renderQAMessages() {
+      const container = document.getElementById('qaMessagesList');
+      if (!container) return;
+
+      if (qaMessages.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = qaMessages.map((msg, msgIdx) => {
+        if (msg.type === 'user') {
+          return `
+            <div class="chat-message user">
+              <div class="chat-avatar">👤</div>
+              <div class="chat-content">
+                <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+                <div class="chat-time">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        } else if (msg.type === 'ai') {
+          const refsHtml = msg.references && msg.references.length > 0 ? `
+            <div class="chat-refs-wrap" id="refs-wrap-${msgIdx}">
+              <span class="chat-refs-toggle" onclick="toggleChatRefs(${msgIdx})">
+                📖 参考资料 (${msg.references.length}) <span id="refs-arrow-${msgIdx}">▼</span>
+              </span>
+              <div class="chat-refs-list" id="refs-list-${msgIdx}">
+                ${msg.references.map((r, rIdx) => `
+                  <div class="chat-ref-item" onclick="toggleRefContent(this, ${msgIdx}, ${rIdx})">
+                    <div class="chat-ref-header">
+                      <div class="chat-ref-title">📄 ${escapeHtml(r.title || '文档')}</div>
+                      ${r.relevance_score ? `<span class="chat-ref-score">${(r.relevance_score * 100).toFixed(0)}%</span>` : ''}
+                    </div>
+                    <div class="chat-ref-content" id="ref-content-${msgIdx}-${rIdx}">${escapeHtml(r.content || '')}</div>
+                    <div class="chat-ref-footer">
+                      <span class="chat-ref-chunk-id">ID: ${(r.chunk_id || '').substring(0, 8)}...</span>
+                      <span style="margin-left: 8px; color: #94a3b8;">点击${r.content && r.content.length > 80 ? '展开' : '查看'}完整内容</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '';
+          return `
+            <div class="chat-message ai">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-content">
+                <div class="chat-bubble">${renderMarkdown(msg.content)}</div>
+                ${refsHtml}
+                <div class="chat-time">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        } else if (msg.type === 'loading') {
+          return `
+            <div class="chat-message ai">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-content">
+                <div class="chat-loading"><div class="spinner"></div>AI思考中...</div>
+              </div>
+            </div>
+          `;
+        }
+        return '';
+      }).join('');
+
+      // 滚动到底部
+      const messagesDiv = document.getElementById('qaMessages');
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function toggleChatRefs(msgIdx) {
+      const list = document.getElementById('refs-list-' + msgIdx);
+      const arrow = document.getElementById('refs-arrow-' + msgIdx);
+      if (!list) return;
+      if (list.classList.contains('expanded')) {
+        list.classList.remove('expanded');
+        arrow.textContent = '▼';
+        // Collapse all individual refs
+        list.querySelectorAll('.chat-ref-content').forEach(el => el.classList.remove('expanded'));
+      } else {
+        list.classList.add('expanded');
+        arrow.textContent = '▲';
+      }
+    }
+
+    function toggleRefContent(refItem, msgIdx, rIdx) {
+      const content = document.getElementById('ref-content-' + msgIdx + '-' + rIdx);
+      if (!content) return;
+      content.classList.toggle('expanded');
+      const footer = refItem.querySelector('.chat-ref-footer span:last-child');
+      if (footer) {
+        footer.textContent = content.classList.contains('expanded') ? '点击收起' : (content.textContent.length > 80 ? '点击展开完整内容' : '查看完整内容');
+      }
+    }
+
+    function handleQAKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitQuestion();
+      }
+    }
+
+    async function submitQuestion() {
+      const question = document.getElementById('qaQuestion').value.trim();
+      if (!question) return;
+
+      const btn = document.getElementById('qaSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = '发送中...';
+
+      // 创建新会话如果不存在
+      if (!currentQASessionId) {
+        createNewQAChat();
+      }
+
+      // 找到当前会话
+      let session = qaSessions.find(s => (s.id || s.session_id) === currentQASessionId);
+
+      // 添加用户消息
+      const userMsg = {
+        type: 'user',
+        content: question,
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      };
+      qaMessages.push(userMsg);
+
+      // 更新会话标题和时间
+      if (session) {
+        session.title = question.substring(0, 20) + (question.length > 20 ? '...' : '');
+        session.time = new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        session.messages = qaMessages;
+        saveQASessionToServer(session);
+        renderQASessions();
+      }
+
+      // 清空输入框并显示消息
+      document.getElementById('qaQuestion').value = '';
+      document.getElementById('qaEmptyState').style.display = 'none';
+      document.getElementById('qaMessagesList').style.display = 'block';
+      renderQAMessages();
+
+      // 添加加载状态
+      qaMessages.push({ type: 'loading' });
+      renderQAMessages();
+
+      try {
+        const topK = 5;
+        const res = await fetch(`${API_BASE}/api/report/knowledge/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: question, top_k: topK })
+        });
+        const data = await res.json();
+
+        // 移除加载状态
+        qaMessages = qaMessages.filter(m => m.type !== 'loading');
+
+        if (data.success && data.results && data.results.length > 0) {
+          // 构建上下文发送给LLM综合
+          const contextText = data.results.map((r, i) =>
+            `[参考资料${i + 1}] ${r.content}`
+          ).join('\n\n');
+
+          const synthesizeRes = await fetch(`${API_BASE}/api/report/knowledge/synthesize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: question,
+              context: contextText,
+              references: data.results.map(r => ({
+                title: r.title,
+                content: r.content,
+                relevance_score: r.relevance_score,
+                chunk_id: r.chunk_id
+              }))
+            })
+          });
+          const synthData = await synthesizeRes.json();
+
+          const aiAnswer = synthData.success ? synthData.answer
+            : '抱歉，AI综合回答失败：' + (synthData.detail || '未知错误');
+
+          // 添加AI消息（带内嵌参考资料）
+          qaMessages.push({
+            type: 'ai',
+            content: aiAnswer,
+            references: data.results.map(r => ({
+              title: r.title,
+              content: r.content,
+              relevance_score: r.relevance_score,
+              chunk_id: r.chunk_id
+            })),
+            time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+          });
+        } else {
+          qaMessages.push({
+            type: 'ai',
+            content: '抱歉，知识库中没有找到相关的内容。您可以先在知识库中上传相关文档，或者换个问题试试。',
+            references: [],
+            time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+
+        // 更新会话
+        if (session) {
+          session.messages = qaMessages;
+          saveQASessionToServer(session);
+        }
+
+        renderQAMessages();
+
+      } catch (e) {
+        qaMessages = qaMessages.filter(m => m.type !== 'loading');
+        qaMessages.push({
+          type: 'ai',
+          content: '抱歉，发生了错误：' + e.message + '。请稍后重试。',
+          references: [],
+          time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        });
+        if (session) {
+          session.messages = qaMessages;
+          saveQASessionToServer(session);
+        }
+        renderQAMessages();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '发送';
+      }
+    }
+
+    // 简单的Markdown转HTML函数
+    function renderMarkdown(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+        .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+        .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+      html = '<p>' + html + '</p>';
+      html = html.replace(/(<li>.+?<\/li>)+/g, '<ul>$&</ul>');
+      return html;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // ========== 上传分析 ==========
@@ -671,7 +1299,8 @@
           body: JSON.stringify({
             report_id: currentReportId,
             query: '分析报告内容，提取报告标题和关键词，列出涉及的A股标的和行业板块，说明利好还是利空',
-            use_knowledge_base: true,
+            use_knowledge_base: false,
+            use_rag: false,
             top_k: 5
           })
         });
@@ -931,37 +1560,173 @@
           </div>`;
         return;
       }
-      container.innerHTML = kbList.map(k => `
+      container.innerHTML = kbList.map(k => {
+        const statusClass = k.status === 'indexed' ? 'indexed' : k.status === 'processing' ? 'processing' : 'uploaded';
+        const statusText = k.status === 'indexed' ? '已解析' : k.status === 'processing' ? '解析中...' : '未解析';
+        const isProcessing = k.status === 'processing';
+        const parseBtnText = k.status === 'indexed' ? '重新解析' : '开始解析';
+        // 进度条
+        const progress = k._progress;
+        const progressBar = isProcessing && progress ? `
+          <div class="kb-progress" style="margin-top: 8px;">
+            <div class="kb-progress-bar" style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+              <div class="kb-progress-fill" style="height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); width: ${progress.progress}%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">${progress.message || '处理中...'}</div>
+          </div>
+        ` : '';
+        return `
         <div class="kb-card">
           <div class="name">
             📄 ${escapeHtml(k.title)}
+            <span class="kb-status ${statusClass}">${statusText}</span>
           </div>
-          ${k.metadata?.tags?.length ? `
-          <div class="kb-tags">
-            ${k.metadata.tags.map(t => `<span class="kb-tag">${escapeHtml(t)}</span>`).join('')}
-          </div>
-          ` : ''}
-          <div style="margin-top: 10px;">
+          <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
+            <button onclick="processKnowledge('${k._id}')" class="btn btn-primary btn-sm" ${isProcessing ? 'disabled' : ''}>${parseBtnText}</button>
+            <button onclick="viewKnowledge('${k._id}')" class="btn btn-secondary btn-sm">查看</button>
             <button onclick="deleteKnowledge('${k._id}')" class="btn btn-danger btn-sm">删除</button>
           </div>
+          ${progressBar}
         </div>
-      `).join('');
+      `}).join('');
+    }
+
+    async function processKnowledge(kbId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/report/knowledge/${kbId}/process`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          // 轮询状态
+          pollKnowledgeStatus(kbId);
+        } else {
+          alert('解析失败: ' + (data.detail || '未知错误'));
+        }
+      } catch (e) {
+        alert('解析异常: ' + e.message);
+      }
+    }
+
+    function pollKnowledgeStatus(kbId) {
+      const check = async () => {
+        try {
+          // 同时获取状态和进度
+          const [statusRes, progressRes] = await Promise.all([
+            fetch(`${API_BASE}/api/report/knowledge/list?limit=50`),
+            fetch(`${API_BASE}/api/report/knowledge/${kbId}/progress`)
+          ]);
+          const statusData = await statusRes.json();
+          const progressData = await progressRes.json();
+
+          if (statusData.success) {
+            const item = statusData.items.find(i => i._id === kbId);
+            if (item) {
+              const idx = kbList.findIndex(i => i._id === kbId);
+              if (idx !== -1) {
+                // 保存之前的进度信息
+                const prevProgress = kbList[idx]._progress;
+                kbList[idx] = item;
+                // 恢复进度信息
+                if (progressData.progress) {
+                  kbList[idx]._progress = progressData.progress;
+                } else if (prevProgress && item.status === 'processing') {
+                  kbList[idx]._progress = prevProgress;
+                }
+                renderKnowledgeList();
+              }
+              if (item.status === 'processing') {
+                setTimeout(check, 1000);
+              } else if (item.status === 'indexed') {
+                // 解析完成
+              } else if (item.status === 'failed') {
+                // 解析失败
+              }
+            }
+          }
+        } catch (e) { console.error('检查状态失败:', e); }
+      };
+      setTimeout(check, 1000);
+    }
+
+    async function viewKnowledge(kbId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/report/knowledge/${kbId}/content`);
+        const data = await res.json();
+        if (data.success) {
+          data.kb_id = kbId;
+          showKnowledgeViewer(data);
+        } else {
+          alert('获取内容失败: ' + (data.detail || '未知错误'));
+        }
+      } catch (e) {
+        alert('获取内容异常: ' + e.message);
+      }
+    }
+
+    function showKnowledgeViewer(data) {
+      const kbId = data.kb_id || '';
+      const modal = document.createElement('div');
+      modal.className = 'kb-viewer-modal';
+      modal.id = 'kbViewerModal';
+      const isPdf = data.file_name?.toLowerCase().endsWith('.pdf');
+      modal.innerHTML = `
+        <div class="viewer-content">
+          <div class="viewer-header">
+            <h3>📄 ${escapeHtml(data.file_name || '文件内容')}</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button onclick="downloadKnowledgeFile('${kbId}')" class="btn btn-secondary btn-sm">下载文件</button>
+              <button class="close-btn" onclick="closeKnowledgeViewer()">×</button>
+            </div>
+          </div>
+          <div class="viewer-body">
+            <div class="viewer-left">
+              <div class="viewer-panel-header">
+                📃 原文件预览
+              </div>
+              <div class="viewer-panel-content" style="padding: 0;">
+                ${isPdf ?
+                  `<iframe src="${API_BASE}/api/report/knowledge/${kbId}/file/preview" style="width: 100%; height: 100%; border: none; display: block;"></iframe>` :
+                  `<div style="padding: 16px; white-space: pre-wrap;">${escapeHtml(data.content || '无法预览此文件类型，请下载查看')}</div>`
+                }
+              </div>
+            </div>
+            <div class="viewer-right">
+              <div class="viewer-panel-header">📑 文本切片 (${data.chunks?.length || 0}块)</div>
+              <div class="viewer-panel-content">
+                ${data.chunks && data.chunks.length > 0 ? data.chunks.map((c, i) => `
+                  <div class="chunk-item">
+                    <div class="chunk-meta">切片 ${i + 1}${c.page ? ' (页' + c.page + ')' : ''}</div>
+                    <div class="chunk-text">${escapeHtml(c.text || '')}</div>
+                  </div>
+                `).join('') : '<div style="color: #94a3b8; text-align: center; padding: 40px;">暂无切片</div>'}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeKnowledgeViewer(); });
+    }
+
+    function downloadKnowledgeFile(kbId) {
+      window.open(`${API_BASE}/api/report/knowledge/${kbId}/file`, '_blank');
+    }
+
+    function closeKnowledgeViewer() {
+      const modal = document.getElementById('kbViewerModal');
+      if (modal) modal.remove();
     }
 
     async function uploadKnowledgeFile(file) {
       if (!file) return;
       const title = file.name.replace(/\.[^/.]+$/, '');
-      const tags = prompt('请输入标签（多个用逗号分隔）:', '基本面,财务分析');
 
       try {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('title', title);
-        formData.append('tags', tags || '');
         const res = await fetch(`${API_BASE}/api/report/knowledge/upload`, { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) {
-          alert('上传成功，正在索引...');
           loadKnowledge();
         } else {
           alert('上传失败: ' + (data.detail || '未知错误'));

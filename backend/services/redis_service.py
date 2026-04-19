@@ -296,6 +296,30 @@ class RedisService:
         except Exception:
             return {"connected": False}
 
+    # ========== 解析进度管理 ==========
+
+    def set_parse_progress(self, kb_id: str, progress: dict, expire: int = 3600) -> bool:
+        """
+        设置知识库解析进度
+
+        Args:
+            kb_id: 知识库ID
+            progress: 进度信息 {"stage": "extracting|chunking|vectorizing|indexing", "progress": 0-100, "message": ""}
+            expire: 过期时间(秒)，默认1小时
+        """
+        key = f"kb:progress:{kb_id}"
+        return self.set_json(key, progress, expire)
+
+    def get_parse_progress(self, kb_id: str) -> Optional[dict]:
+        """获取知识库解析进度"""
+        key = f"kb:progress:{kb_id}"
+        return self.get_json(key)
+
+    def delete_parse_progress(self, kb_id: str) -> bool:
+        """删除知识库解析进度"""
+        key = f"kb:progress:{kb_id}"
+        return self.delete(key)
+
 
 # 单例模式全局实例
 _redis_service: Optional[RedisService] = None

@@ -295,6 +295,38 @@ class MongoDBService:
         self.db.knowledge_base.delete_one({"_id": ObjectId(kb_id)})
         return True
 
+    def get_knowledge_file(self, kb_id: str) -> Optional[bytes]:
+        """获取知识库文件二进制数据"""
+        kb = self.get_knowledge(kb_id)
+        if kb and "file_id" in kb:
+            try:
+                file_id = ObjectId(kb["file_id"])
+                return self.fs.get(file_id).read()
+            except Exception as e:
+                print(f"[MongoDB] 获取知识库文件失败: {e}")
+        return None
+
+    def update_knowledge_status(self, kb_id: str, status: str):
+        """更新知识库处理状态"""
+        self.db.knowledge_base.update_one(
+            {"_id": ObjectId(kb_id)},
+            {"$set": {"status": status}}
+        )
+
+    def update_knowledge_progress(self, kb_id: str, progress: dict):
+        """更新知识库解析进度"""
+        self.db.knowledge_base.update_one(
+            {"_id": ObjectId(kb_id)},
+            {"$set": {"_progress": progress}}
+        )
+
+    def clear_knowledge_progress(self, kb_id: str):
+        """清除知识库解析进度"""
+        self.db.knowledge_base.update_one(
+            {"_id": ObjectId(kb_id)},
+            {"$unset": {"_progress": ""}}
+        )
+
     # ========== 分析结果集合操作 ==========
 
     def save_analysis_result(self, report_id: str, query: str,
@@ -389,6 +421,52 @@ class MongoDBService:
         """获取文件类型"""
         ext = filename.lower().split('.')[-1]
         return ext if ext in ['pdf', 'docx', 'doc', 'txt'] else 'unknown'
+
+    # ========== AI问答会话集合操作 ==========
+
+    def save_qa_session(self, session_id: str, title: str, messages: List[Dict], updated_at: str = None) -> str:
+        """
+        保存或更新AI问答会话
+
+        Args:
+            session_id: 会话ID
+            title: 会话标题
+            messages: 消息列表
+            updated_at: 更新时间
+
+        Returns:
+            str: 会话ID
+        """
+        doc = {
+            "session_id": session_id,
+            "title": title,
+            "messages": messages,
+            "updated_at": updated_at or datetime.utcnow().isoformat()
+        }
+        self.db.qa_sessions.update_one(
+            {"session_id": session_id},
+            {"$set": doc},
+            upsert=True
+        )
+        return session_id
+
+    def get_qa_session(self, session_id: str) -> Optional[Dict]:
+        """获取单个会话"""
+        return self.db.qa_sessions.find_one({"session_id": session_id})
+
+    def list_qa_sessions(self, skip: int = 0, limit: int = 50) -> List[Dict]:
+        """获取会话列表（按更新时间倒序）"""
+        sessions = self.db.qa_sessions.find().sort("updated_at", -1).skip(skip).limit(limit)
+        result = []
+        for s in sessions:
+            s["_id"] = str(s["_id"])
+            result.append(s)
+        return result
+
+    def delete_qa_session(self, session_id: str) -> bool:
+        """删除会话"""
+        result = self.db.qa_sessions.delete_one({"session_id": session_id})
+        return result.deleted_count > 0
 
     def ensure_indexes(self):
         """创建必要的索引"""

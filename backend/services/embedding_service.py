@@ -1,35 +1,20 @@
 """
-Embedding 服务 - 文本向量化
+Embedding 服务 - 文本向量化（使用阿里云DashScope text-embedding-v4）
 """
 import os
 import hashlib
 from typing import Optional, List
-from openai import OpenAI
+import requests
 from backend.services.redis_service import get_redis_service
 
 class EmbeddingService:
-    """文本向量化服务"""
+    """文本向量化服务（阿里云DashScope）"""
 
     def __init__(self, api_key: str = None, model: str = None):
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("DEEPSEEK_API_KEY")
-        self.model = model or os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-        self.dimension = 1536 if "3-small" in self.model else 768
-        self._client: Optional[OpenAI] = None
+        self.api_key = api_key or os.getenv("DASHSCOPE_API_KEY")
+        self.model = model or os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v4")
+        self.dimension = 1024  # text-embedding-v4 输出维度为1024
         self._redis = None
-
-    def _get_client(self) -> OpenAI:
-        """获取OpenAI客户端"""
-        if self._client is None:
-            if "openai" in (os.getenv("OPENAI_API_KEY") or "").lower():
-                self._client = OpenAI(api_key=self.api_key)
-            else:
-                # 使用兼容的DeepSeek API
-                base_url = "https://api.deepseek.com/v1" if "deepseek" not in self.api_key.lower() else None
-                self._client = OpenAI(
-                    api_key=self.api_key,
-                    base_url=base_url
-                )
-        return self._client
 
     def _get_redis(self):
         """获取Redis缓存"""
@@ -67,17 +52,30 @@ class EmbeddingService:
                     return cached
 
         try:
-            client = self._get_client()
-            response = client.embeddings.create(
-                model=self.model,
-                input=text[:8192]  # 限制输入长度
+            response = requests.post(
+                "https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": self.model,
+                    "input": {"texts": [text[:8192]]}
+                },
+                timeout=30
             )
 
-            embedding = response.data[0].embedding
+            if response.status_code != 200:
+                print(f"[Embedding] API error: {response.status_code}, {response.text}")
+                return None
+
+            result = response.json()
+            # DashScope返回格式: {"output": {"embeddings": [{"embedding": [...], "text_index": 0}]}}
+            embedding = result["output"]["embeddings"][0]["embedding"]
 
             # 写入缓存
-            if use_cache and redis:
-                redis.cache_embedding(self._text_hash(text), embedding)
+            if use_cache and self._redis:
+                self._redis.cache_embedding(self._text_hash(text), embedding)
 
             return embedding
 
@@ -123,27 +121,42 @@ class EmbeddingService:
         # 批量API调用
         if texts_to_embed:
             try:
-                client = self._get_client()
-                # OpenAI批量限制
-                batch_size = 100
+                # DashScope批量限制为10
+                batch_size = 10
                 for batch_start in range(0, len(texts_to_embed), batch_size):
                     batch_end = min(batch_start + batch_size, len(texts_to_embed))
                     batch = texts_to_embed[batch_start:batch_end]
 
-                    response = client.embeddings.create(
-                        model=self.model,
-                        input=batch
+                    response = requests.post(
+                        "https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding",
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": self.model,
+                            "input": {"texts": batch}
+                        },
+                        timeout=60
                     )
 
-                    for j, embedding_data in enumerate(response.data):
+                    if response.status_code != 200:
+                        print(f"[Embedding] Batch API error: {response.status_code}, {response.text}")
+                        continue
+
+                    result = response.json()
+                    # DashScope返回格式: {"output": {"embeddings": [{"embedding": [...], "text_index": 0}, ...]}}
+                    embeddings_data = result["output"]["embeddings"]
+
+                    for j, emb_data in enumerate(embeddings_data):
                         idx = indices_to_embed[batch_start + j]
-                        results[idx] = embedding_data.embedding
+                        results[idx] = emb_data["embedding"]
 
                         # 写入缓存
                         if use_cache and redis:
                             redis.cache_embedding(
                                 self._text_hash(texts[idx]),
-                                embedding_data.embedding
+                                emb_data["embedding"]
                             )
 
             except Exception as e:
