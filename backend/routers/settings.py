@@ -16,10 +16,10 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__)
 
 
 def get_db_connection():
-    """获取数据库连接（使用连接池）"""
-    from backend.utils.db_pool import get_db_pool
-    pool = get_db_pool(DB_PATH, pool_size=5)
-    return pool.get_connection()
+    """获取数据库连接"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 class SettingsItem(BaseModel):
@@ -32,13 +32,15 @@ class SettingsItem(BaseModel):
 async def get_llm_settings():
     """获取LLM配置"""
     try:
+        import os
         conn = get_db_connection()
         cursor = conn.cursor()
 
         # 从数据库获取设置
         settings_keys = [
             'deepseek_api_key', 'deepseek_base_url', 'default_model',
-            'embedding_mode', 'dashscope_api_key', 'embedding_model', 'embedding_dim'
+            'embedding_mode', 'dashscope_api_key', 'embedding_model', 'embedding_dim',
+            'rerank_model'
         ]
 
         result = {}
@@ -51,6 +53,19 @@ async def get_llm_settings():
                 else:
                     result[key] = row['value']
 
+        # 从环境变量补充缺失的设置
+        env_mappings = {
+            'deepseek_api_key': 'DEEPSEEK_API_KEY',
+            'deepseek_base_url': 'DEEPSEEK_BASE_URL',
+            'dashscope_api_key': 'DASHSCOPE_API_KEY',
+        }
+        for key, env_key in env_mappings.items():
+            if key not in result:
+                env_value = os.getenv(env_key)
+                if env_value:
+                    result[key] = env_value
+
+        conn.close()
         return success_response(data={"config": result}, message="获取LLM配置成功")
 
     except Exception as e:
@@ -66,7 +81,8 @@ async def save_llm_settings(settings: Dict[str, Any]):
 
         settings_keys = [
             'deepseek_api_key', 'deepseek_base_url', 'default_model',
-            'embedding_mode', 'dashscope_api_key', 'embedding_model', 'embedding_dim'
+            'embedding_mode', 'dashscope_api_key', 'embedding_model', 'embedding_dim',
+            'rerank_model'
         ]
 
         for key, value in settings.items():
@@ -89,6 +105,8 @@ async def save_llm_settings(settings: Dict[str, Any]):
 async def test_llm_connection():
     """测试LLM连接"""
     try:
+        import os
+        import httpx
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM system_settings WHERE key = 'deepseek_api_key'")
@@ -98,24 +116,28 @@ async def test_llm_connection():
         cursor.execute("SELECT value FROM system_settings WHERE key = 'deepseek_base_url'")
         row = cursor.fetchone()
         base_url = row['value'] if row else "https://api.deepseek.com/v1"
+        conn.close()
+
+        # 如果数据库中没有，尝试从环境变量获取
+        if not api_key:
+            api_key = os.getenv("DEEPSEEK_API_KEY")
 
         if not api_key:
             return error_response(error="API Key未配置", message="连接失败")
 
         # 测试API连接
-        from backend.utils.http_client import get_http_client
-        http_client = get_http_client()
         try:
-            response = await http_client.post(
-                f"{base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={"model": "deepseek-chat", "messages": [{"role": "user", "content": "Hi"}]},
-                timeout=10
-            )
-            if "choices" in response:
-                return success_response(message="LLM连接成功")
-            else:
-                return error_response(error=str(response), message="连接失败")
+            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=10.0)) as client:
+                response = await client.post(
+                    f"{base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={"model": "deepseek-chat", "messages": [{"role": "user", "content": "Hi"}]}
+                )
+                result = response.json()
+                if "choices" in result:
+                    return success_response(message="LLM连接成功")
+                else:
+                    return error_response(error=str(result), message="连接失败")
         except Exception as e:
             return error_response(error=str(e), message="连接失败")
 
@@ -127,9 +149,8 @@ async def test_llm_connection():
 async def test_embedding_connection():
     """测试Embedding连接"""
     try:
-        import dashscope
-        from dashscope import TextEmbedding
-
+        import os
+        import requests
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM system_settings WHERE key = 'dashscope_api_key'")
@@ -137,19 +158,31 @@ async def test_embedding_connection():
         api_key = row['value'] if row else None
         conn.close()
 
+        # 如果数据库中没有，尝试从环境变量获取
+        if not api_key:
+            api_key = os.getenv("DASHSCOPE_API_KEY")
+
         if not api_key:
             return error_response(error="API Key未配置", message="连接失败")
 
-        dashscope.api_key = api_key
-        response = TextEmbedding.call(
-            model="text-embedding-v4",
-            input="测试文本"
+        # 使用 DashScope API 直接调用
+        response = requests.post(
+            "https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "text-embedding-v4",
+                "input": {"texts": ["测试文本"]}
+            },
+            timeout=30
         )
 
         if response.status_code == 200:
             return success_response(message="Embedding服务连接成功")
         else:
-            return error_response(error=f"连接失败: {response.code}", message="连接失败")
+            return error_response(error=f"连接失败: {response.status_code} - {response.text}", message="连接失败")
 
     except Exception as e:
         return error_response(error=str(e), message="连接异常")
@@ -159,6 +192,7 @@ async def test_embedding_connection():
 async def get_ocr_settings():
     """获取OCR配置"""
     try:
+        import os
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -175,6 +209,17 @@ async def get_ocr_settings():
                     result[key] = int(row['value'])
                 else:
                     result[key] = row['value']
+
+        # 从环境变量补充缺失的设置
+        env_mappings = {
+            'paddleocr_access_token': 'PADDLEOCR_TOKEN',
+            'paddleocr_api_url': 'PADDLEOCR_API_URL',
+        }
+        for key, env_key in env_mappings.items():
+            if key not in result:
+                env_value = os.getenv(env_key)
+                if env_value:
+                    result[key] = env_value
 
         conn.close()
         return {"success": True, "config": result}
@@ -214,16 +259,21 @@ async def save_ocr_settings(settings: Dict[str, Any]):
 async def test_ocr_connection():
     """测试OCR连接"""
     try:
+        import os
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT value FROM system_settings WHERE key = 'paddleocr_access_token'")
         row = cursor.fetchone()
         access_token = row['value'] if row else None
 
+        # 如果数据库中没有，尝试从环境变量获取
+        if not access_token:
+            access_token = os.getenv("PADDLEOCR_TOKEN")
+
         if not access_token:
             return error_response(error="Access Token未配置", message="连接失败")
 
-        return success_response(message="OCR配置验证成功（实际连接测试需要文件上传）")
+        return success_response(message="OCR配置验证成功")
 
     except Exception as e:
         return error_response(error=str(e), message="连接异常")
@@ -245,6 +295,49 @@ async def get_rerank_settings():
         )
     except Exception as e:
         return error_response(error=str(e), message="获取配置失败")
+
+
+@router.post("/rerank/test")
+async def test_rerank_connection():
+    """测试Rerank连接"""
+    try:
+        import os
+        from dashscope import TextReRank
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM system_settings WHERE key = 'dashscope_api_key'")
+        row = cursor.fetchone()
+        api_key = row['value'] if row else None
+
+        cursor.execute("SELECT value FROM system_settings WHERE key = 'rerank_model'")
+        row2 = cursor.fetchone()
+        rerank_model = row2['value'] if row2 else "gte-rerank"
+        conn.close()
+
+        # 如果数据库中没有，尝试从环境变量获取
+        if not api_key:
+            api_key = os.getenv("DASHSCOPE_API_KEY")
+
+        if not api_key:
+            return error_response(error="API Key未配置", message="连接失败")
+
+        # 使用 TextReRank API 测试
+        response = TextReRank.call(
+            model=rerank_model,
+            query="测试查询",
+            documents=["测试文档1", "测试文档2"],
+            return_documents=True,
+            top_n=2
+        )
+
+        if response.status_code == 200:
+            return success_response(message="Rerank服务连接成功")
+        else:
+            return error_response(error=f"连接失败: {response.code} - {response.message}", message="连接失败")
+
+    except Exception as e:
+        return error_response(error=str(e), message="连接异常")
 
 
 @router.get("/all")

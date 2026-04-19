@@ -102,6 +102,14 @@
       background: var(--surface);
     }
 
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
     .page-header {
       padding: 16px 24px;
       border-bottom: 1px solid var(--border);
@@ -209,6 +217,39 @@
     .setting-row .setting-info { flex: 1; }
     .setting-row .setting-title { font-size: 14px; font-weight: 500; }
     .setting-row .setting-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* 密码输入框包装 */
+    .input-password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-password-wrapper input {
+      flex: 1;
+      padding-right: 36px;
+    }
+    .input-password-wrapper .toggle-password {
+      position: absolute;
+      right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+    .input-password-wrapper .toggle-password:hover { color: var(--primary); }
+    .input-password-wrapper .toggle-password svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
 
     /* 开关 */
     .switch {
@@ -499,10 +540,6 @@
               <span class="icon">🗄️</span>
               <span>数据库配置</span>
             </div>
-            <div class="nav-item" onclick="switchSection('notification', this)">
-              <span class="icon">🔔</span>
-              <span>通知配置</span>
-            </div>
           </div>
           <!-- 缓存管理 -->
           <div class="nav-item" onclick="switchSection('cache', this)">
@@ -664,7 +701,10 @@
             <h3>DeepSeek API</h3>
             <div class="form-group">
               <label>API Key</label>
-              <input type="password" id="deepseekApiKey" placeholder="输入 DeepSeek API Key">
+              <div class="input-password-wrapper">
+                <input type="password" id="deepseekApiKey" value="sk-8cb3bfe75b94480a8005a87362306526" placeholder="输入 DeepSeek API Key">
+                <button type="button" class="toggle-password" onclick="togglePassword('deepseekApiKey')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
               <span class="hint">用于调用 DeepSeek 大模型服务</span>
             </div>
             <div class="form-group">
@@ -684,21 +724,70 @@
             </div>
           </div>
           <div class="settings-card">
-            <h3>Embedding 配置</h3>
+            <h3>阿里云 DashScope 配置</h3>
             <div class="form-group">
-              <label>OpenAI API Key (用于 Embedding)</label>
-              <input type="password" id="openaiApiKey" placeholder="输入 OpenAI API Key">
+              <label>API Key</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="dashscopeApiKey" value="sk-ee1d74cdd2a84f41b69a58e852f9b2ee" placeholder="输入 DashScope API Key">
+                <button type="button" class="toggle-password" onclick="togglePassword('dashscopeApiKey')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+              <span class="hint">用于 Embedding 和 Rerank 服务</span>
             </div>
             <div class="form-group">
               <label>Embedding 模型</label>
               <select id="embeddingModel">
-                <option value="text-embedding-3-small" selected>text-embedding-3-small</option>
-                <option value="text-embedding-3-large">text-embedding-3-large</option>
-                <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                <option value="text-embedding-v4" selected>text-embedding-v4</option>
+                <option value="text-embedding-v3">text-embedding-v3</option>
+                <option value="text-embedding-v2">text-embedding-v2</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Embedding 向量维度</label>
+              <select id="embeddingDim">
+                <option value="1024" selected>1024</option>
+                <option value="1536">1536</option>
+                <option value="2048">2048</option>
+              </select>
+              <span class="hint">text-embedding-v4 推荐 2048 维度</span>
+            </div>
+            <div class="form-group">
+              <label>Rerank 模型</label>
+              <select id="rerankModel">
+                <option value="gte-rerank" selected>gte-rerank</option>
+                <option value="gte-rerank-v2">gte-rerank-v2</option>
+              </select>
+              <span class="hint">用于搜索结果重排序</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" onclick="testEmbeddingConnection()">测试 Embedding</button>
+              <button class="btn btn-secondary" onclick="testRerankConnection()">测试 Rerank</button>
+              <button class="btn btn-primary" onclick="saveEmbeddingConfig()">保存配置</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <h3>PaddleOCR 配置</h3>
+            <div class="form-group">
+              <label>Access Token</label>
+              <div class="input-password-wrapper">
+                <input type="password" id="paddleocrToken" value="8cdcb6fdf50ed625687b9284080cf4f621d70da6" placeholder="输入 PaddleOCR Access Token">
+                <button type="button" class="toggle-password" onclick="togglePassword('paddleocrToken')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+              <span class="hint">从 AIStudio 获取 PaddleOCR Access Token</span>
+            </div>
+            <div class="form-group">
+              <label>API 地址</label>
+              <input type="text" id="paddleocrApiUrl" value="https://paddleocr.aistudio-app.com/api/v2/ocr/jobs" placeholder="API 请求地址">
+            </div>
+            <div class="form-group">
+              <label>模型版本</label>
+              <select id="paddleocrModel">
+                <option value="PaddleOCR-VL-1.5" selected>PaddleOCR-VL-1.5</option>
+                <option value="PaddleOCR-VL-2.0">PaddleOCR-VL-2.0</option>
               </select>
             </div>
             <div class="btn-group">
-              <button class="btn btn-primary" onclick="saveEmbeddingConfig()">保存配置</button>
+              <button class="btn btn-secondary" onclick="testOcrConnection()">测试连接</button>
+              <button class="btn btn-primary" onclick="saveOcrConfig()">保存配置</button>
             </div>
           </div>
         </div>
@@ -768,7 +857,10 @@
               </div>
               <div class="form-group">
                 <label>密码</label>
-                <input type="password" id="mongodbPassword" placeholder="密码">
+                <div class="input-password-wrapper">
+                  <input type="password" id="mongodbPassword" placeholder="密码">
+                  <button type="button" class="toggle-password" onclick="togglePassword('mongodbPassword')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
               </div>
             </div>
             <div class="btn-group">
@@ -785,67 +877,16 @@
               </div>
               <div class="form-group">
                 <label>密码</label>
-                <input type="password" id="redisPassword" placeholder="密码（可选）">
+                <div class="input-password-wrapper">
+                  <input type="password" id="redisPassword" placeholder="密码（可选）">
+                  <button type="button" class="toggle-password" onclick="togglePassword('redisPassword')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
               </div>
             </div>
             <div class="btn-group">
               <button class="btn btn-secondary" onclick="testRedis()">测试连接</button>
               <button class="btn btn-primary" onclick="saveDatabase()">保存配置</button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 通知配置 -->
-      <div id="section-notification" class="settings-section" style="display:none;">
-        <div class="page-header">
-          <h2>通知配置</h2>
-          <p class="desc">系统通知和提醒设置</p>
-        </div>
-        <div class="page-content">
-          <div class="settings-card">
-            <h3>通知方式</h3>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-title">桌面通知</div>
-                <div class="setting-desc">浏览器桌面通知提醒</div>
-              </div>
-              <div class="switch active" id="desktopNotifSwitch"></div>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-title">邮件通知</div>
-                <div class="setting-desc">通过邮件发送重要通知</div>
-              </div>
-              <div class="switch" id="emailNotifSwitch"></div>
-            </div>
-          </div>
-          <div class="settings-card">
-            <h3>通知类型</h3>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-title">分析完成通知</div>
-                <div class="setting-desc">股票分析完成后通知</div>
-              </div>
-              <div class="switch active" id="analysisNotifSwitch"></div>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-title">系统维护通知</div>
-                <div class="setting-desc">系统维护和更新提醒</div>
-              </div>
-              <div class="switch active" id="maintenanceNotifSwitch"></div>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="setting-title">数据异常通知</div>
-                <div class="setting-desc">数据获取异常时通知</div>
-              </div>
-              <div class="switch active" id="dataErrorNotifSwitch"></div>
-            </div>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-primary" onclick="saveNotification()">保存设置</button>
           </div>
         </div>
       </div>
@@ -958,7 +999,10 @@
 
       // 切换内容区
       document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
-      document.getElementById('section-' + section).style.display = 'block';
+      const targetSection = document.getElementById('section-' + section);
+      targetSection.style.display = 'flex';
+      // 重置滚动位置
+      targetSection.querySelector('.page-content').scrollTop = 0;
 
       // 加载对应配置
       loadConfig(section);
@@ -968,7 +1012,7 @@
     async function loadConfig(section) {
       switch(section) {
         case 'llm':
-          loadLlmConfig();
+          await loadLlmConfig();
           break;
         case 'datasource':
           loadDataSourceConfig();
@@ -976,14 +1020,14 @@
         case 'database':
           loadDatabaseConfig();
           break;
-        case 'notification':
-          loadNotificationConfig();
-          break;
         case 'cache':
           loadCacheStatus();
           break;
         case 'appearance':
           loadAppearanceConfig();
+          break;
+        case 'ocr':
+          await loadOcrConfig();
           break;
       }
     }
@@ -1116,39 +1160,153 @@
       showToast('安全设置已保存', 'success');
     }
 
+    // ========== 密码显示/隐藏 ==========
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const btn = input.parentElement.querySelector('.toggle-password');
+      const eyeOpen = '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const eyeClosed = '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = eyeClosed;
+      } else {
+        input.type = 'password';
+        btn.innerHTML = eyeOpen;
+      }
+    }
+
     // ========== 大模型配置 ==========
-    function loadLlmConfig() {
-      const config = JSON.parse(localStorage.getItem('settings_llm') || '{}');
-      if (config.apiKey) document.getElementById('deepseekApiKey').value = config.apiKey;
-      if (config.baseUrl) document.getElementById('deepseekBaseUrl').value = config.baseUrl;
-      if (config.model) document.getElementById('deepseekModel').value = config.model;
-      if (config.openaiApiKey) document.getElementById('openaiApiKey').value = config.openaiApiKey;
-      if (config.embeddingModel) document.getElementById('embeddingModel').value = config.embeddingModel;
+    async function loadLlmConfig() {
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/llm`);
+        const data = await res.json();
+        if (data.success && data.config) {
+          if (data.config.deepseek_api_key) {
+            document.getElementById('deepseekApiKey').value = data.config.deepseek_api_key;
+          }
+          if (data.config.deepseek_base_url) {
+            document.getElementById('deepseekBaseUrl').value = data.config.deepseek_base_url;
+          }
+          if (data.config.default_model) {
+            document.getElementById('deepseekModel').value = data.config.default_model;
+          }
+          if (data.config.dashscope_api_key) {
+            document.getElementById('dashscopeApiKey').value = data.config.dashscope_api_key;
+          }
+          if (data.config.embedding_model) {
+            document.getElementById('embeddingModel').value = data.config.embedding_model;
+          }
+          if (data.config.embedding_dim) {
+            document.getElementById('embeddingDim').value = data.config.embedding_dim;
+          }
+          if (data.config.rerank_model) {
+            document.getElementById('rerankModel').value = data.config.rerank_model;
+          }
+        }
+      } catch (e) {
+        console.error('加载LLM配置失败:', e);
+      }
     }
 
     async function testLlmConnection() {
-      showToast('正在测试连接...', 'success');
-      // 模拟测试
-      setTimeout(() => showToast('连接测试成功', 'success'), 1000);
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '测试中...';
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/llm/test`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? 'LLM连接成功' : ('连接失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('连接异常: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = '测试连接';
     }
 
-    function saveLlmConfig() {
-      const config = {
-        apiKey: document.getElementById('deepseekApiKey').value,
-        baseUrl: document.getElementById('deepseekBaseUrl').value,
-        model: document.getElementById('deepseekModel').value
-      };
-      localStorage.setItem('settings_llm', JSON.stringify(config));
-      showToast('大模型配置已保存', 'success');
+    async function saveLlmConfig() {
+      try {
+        const config = {
+          deepseek_api_key: document.getElementById('deepseekApiKey').value,
+          deepseek_base_url: document.getElementById('deepseekBaseUrl').value,
+          default_model: document.getElementById('deepseekModel').value
+        };
+        const res = await fetch(`${API_BASE}/api/settings/llm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        showToast(data.success ? 'LLM配置已保存' : ('保存失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('保存异常: ' + e.message, 'error');
+      }
     }
 
-    function saveEmbeddingConfig() {
-      const config = {
-        openaiApiKey: document.getElementById('openaiApiKey').value,
-        embeddingModel: document.getElementById('embeddingModel').value
-      };
-      localStorage.setItem('settings_embedding', JSON.stringify(config));
-      showToast('Embedding 配置已保存', 'success');
+    async function testEmbeddingConnection() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '测试中...';
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/llm/embedding/test`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? 'Embedding服务连接成功' : ('连接失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('连接异常: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = '测试 Embedding';
+    }
+
+    async function saveEmbeddingConfig() {
+      try {
+        const config = {
+          dashscope_api_key: document.getElementById('dashscopeApiKey').value,
+          embedding_model: document.getElementById('embeddingModel').value,
+          embedding_dim: parseInt(document.getElementById('embeddingDim').value),
+          rerank_model: document.getElementById('rerankModel').value
+        };
+        const res = await fetch(`${API_BASE}/api/settings/llm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        showToast(data.success ? 'Embedding配置已保存' : ('保存失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('保存异常: ' + e.message, 'error');
+      }
+    }
+
+    async function testRerankConnection() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '测试中...';
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/rerank/test`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? 'Rerank服务连接成功' : ('连接失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('连接异常: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = '测试 Rerank';
+    }
+
+    async function saveRerankConfig() {
+      try {
+        const config = {
+          rerank_model: document.getElementById('rerankModel').value
+        };
+        const res = await fetch(`${API_BASE}/api/settings/llm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        showToast(data.success ? 'Rerank配置已保存' : ('保存失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('保存异常: ' + e.message, 'error');
+      }
     }
 
     // ========== 数据源配置 ==========
@@ -1174,6 +1332,61 @@
       };
       localStorage.setItem('settings_datasource', JSON.stringify(config));
       showToast('数据源配置已保存', 'success');
+    }
+
+    // ========== OCR配置 ==========
+    async function loadOcrConfig() {
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/ocr`);
+        const data = await res.json();
+        if (data.success && data.config) {
+          if (data.config.paddleocr_access_token) {
+            document.getElementById('paddleocrToken').value = data.config.paddleocr_access_token;
+          }
+          if (data.config.paddleocr_api_url) {
+            document.getElementById('paddleocrApiUrl').value = data.config.paddleocr_api_url;
+          }
+          if (data.config.paddleocr_timeout) {
+            document.getElementById('paddleocrTimeout').value = data.config.paddleocr_timeout;
+          }
+        }
+      } catch (e) {
+        console.error('加载OCR配置失败:', e);
+      }
+    }
+
+    async function testOcrConnection() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '测试中...';
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/ocr/test`, { method: 'POST' });
+        const data = await res.json();
+        showToast(data.success ? 'OCR配置验证成功' : ('连接失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('连接异常: ' + e.message, 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = '测试连接';
+    }
+
+    async function saveOcrConfig() {
+      try {
+        const config = {
+          paddleocr_api_url: document.getElementById('paddleocrApiUrl').value,
+          paddleocr_access_token: document.getElementById('paddleocrToken').value,
+          paddleocr_timeout: parseInt(document.getElementById('paddleocrTimeout').value)
+        };
+        const res = await fetch(`${API_BASE}/api/settings/ocr`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        showToast(data.success ? 'OCR配置已保存' : ('保存失败: ' + (data.error || data.message)), data.success ? 'success' : 'error');
+      } catch (e) {
+        showToast('保存异常: ' + e.message, 'error');
+      }
     }
 
     // ========== 数据库配置 ==========
